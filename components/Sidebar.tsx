@@ -10,6 +10,9 @@ interface SidebarProps {
     isCollapsed: boolean;
     toggleCollapse: () => void;
 
+    isMobileOpen?: boolean;
+    onCloseMobile?: () => void;
+
     workspaceClients?: Array<{ id: string; name: string }>;
     currentClientId?: string;
     currentClientName?: string;
@@ -26,6 +29,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     isReadOnly, 
     isCollapsed, 
     toggleCollapse,
+    isMobileOpen = false,
+    onCloseMobile,
     workspaceClients,
     currentClientId,
     currentClientName,
@@ -51,7 +56,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         disabled?: boolean;
     }> = ({ view, label, icon, disabled }) => (
         <button
-            onClick={() => !disabled && setView(view)}
+            onClick={() => {
+                if (disabled) return;
+                setView(view);
+                onCloseMobile?.();
+            }}
             disabled={disabled}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
                 disabled ? 'opacity-50 cursor-not-allowed text-zinc-400' :
@@ -66,21 +75,26 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     return (
         <aside 
-            className={`flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 backdrop-blur-xl h-screen transition-all duration-300 ease-in-out fixed left-0 top-0 z-50 ${
-                isCollapsed ? 'w-[72px]' : 'w-[260px]'
-            }`}
+            className={`flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-xl h-screen transition-all duration-300 ease-in-out fixed left-0 top-0 z-50 w-[260px] ${
+                isCollapsed ? 'md:w-[72px]' : 'md:w-[260px]'
+            } ${
+                isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+            } md:translate-x-0`}
         >
             {/* Header / Brand */}
             <div className={`flex items-center h-14 px-4 border-b border-zinc-200/50 dark:border-zinc-800/50 ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
-                <div className={`flex items-center gap-2 overflow-hidden transition-all ${isCollapsed ? 'w-8' : 'w-full'}`}>
-                    <div className="w-6 h-6 rounded-md flex-shrink-0 flex items-center justify-center text-xs font-bold text-white bg-zinc-600">
-                        Y
-                    </div>
-                    {!isCollapsed && (
-                        <span className="font-semibold text-zinc-800 dark:text-zinc-100 truncate text-sm">
-                            Yangyu 社群儀表板
-                        </span>
-                    )}
+                <div className={`flex items-center gap-3 overflow-hidden transition-all ${isCollapsed ? 'w-8' : 'w-full'}`}>
+                    <div className="flex-1" />
+                    <button
+                        type="button"
+                        onClick={() => onCloseMobile?.()}
+                        className="md:hidden p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                        aria-label="關閉選單"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -190,7 +204,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         <div key={c.id} className={`group relative ${disabled ? 'opacity-50' : ''}`}>
                                             <button
                                                 type="button"
-                                                onClick={() => !disabled && !isEditing && onChangeClient?.(c.id)}
+                                                onClick={() => {
+                                                    if (disabled || isEditing) return;
+                                                    onChangeClient?.(c.id);
+                                                    onCloseMobile?.();
+                                                }}
                                                 disabled={disabled}
                                                 className={`${baseClass} pr-2 ${disabled ? 'cursor-not-allowed' : ''} ${isActive ? activeClass : hoverClass}`}
                                                 title={isCollapsed ? c.name : undefined}

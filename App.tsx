@@ -183,6 +183,7 @@ const App: React.FC = () => {
 
     // UI State
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
     // Deconstruct for easier access
     const { dataSets, selectionState, allMonthlyFollowerData, baseFollowerData, companyProfile } = allUserData;
@@ -862,6 +863,12 @@ const App: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex font-inter">
+            {isMobileNavOpen && (
+                <div
+                    className="fixed inset-0 bg-black/30 z-40 md:hidden"
+                    onClick={() => setIsMobileNavOpen(false)}
+                />
+            )}
             <Sidebar 
                 currentView={currentView}
                 setView={(view) => {
@@ -869,10 +876,13 @@ const App: React.FC = () => {
                     if (!confirmDiscardIfDirty('切換頁面')) return;
                     setIsDataManagementDirty(false);
                     setCurrentView(view);
+                    setIsMobileNavOpen(false);
                 }}
                 isReadOnly={isReadOnly}
                 isCollapsed={isSidebarCollapsed}
                 toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                isMobileOpen={isMobileNavOpen}
+                onCloseMobile={() => setIsMobileNavOpen(false)}
                 workspaceClients={workspace ? Object.entries(workspace.clients).map(([id, c]) => ({ id, name: c.name })) : undefined}
                 currentClientId={workspace?.currentClientId}
                 currentClientName={workspace ? currentClientName : undefined}
@@ -892,6 +902,8 @@ const App: React.FC = () => {
                     });
 
                     setIsDataManagementDirty(false);
+
+                    setIsMobileNavOpen(false);
 
                     void KVStore.setUserData(fbUser.uid, nextWorkspace);
                 } : undefined}
@@ -929,23 +941,25 @@ const App: React.FC = () => {
             />
             
             <main 
-                className={`flex-1 transition-all duration-300 ease-in-out px-6 py-8 ${
-                    isSidebarCollapsed ? 'ml-[72px]' : 'ml-[260px]'
+                className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ease-in-out px-4 sm:px-6 py-6 sm:py-8 ml-0 ${
+                    isSidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-[260px]'
                 }`}
             >
-                <div className="max-w-[1200px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="max-w-[1200px] mx-auto w-full flex-1 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     
                     {/* Top Bar / Breadcrumb context could go here */}
                     <div className="flex justify-between items-end mb-2">
                         <div className="flex items-center gap-3">
-                            {companyProfile?.logo ? (
-                                <img
-                                    src={companyProfile.logo}
-                                    alt="Logo"
-                                    className="w-10 h-10 rounded-lg object-cover border border-zinc-200 dark:border-zinc-800 bg-white"
-                                />
-                            ) : null}
-
+                            <button
+                                type="button"
+                                className="md:hidden p-2 -ml-2 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
+                                onClick={() => setIsMobileNavOpen(true)}
+                                aria-label="開啟選單"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
                             <div>
                                 <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                                     {currentView === 'dashboard' ? '儀表板總覽' : '資料集管理'}
@@ -1033,6 +1047,8 @@ const App: React.FC = () => {
                         />
                     )}
                 </div>
+
+                <Footer />
             </main>
         </div>
     );
