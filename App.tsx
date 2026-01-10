@@ -17,6 +17,14 @@ const WORKSPACE_ANALYSIS_DELIM = '::';
 // Default palette: earth tones (requested) for new clients.
 const CLIENT_THEME_COLORS: ClientThemeColor[] = ['stone', 'amber', 'orange', 'zinc'];
 
+const DEFAULT_CUSTOM_CLIENT_COLOR = '#777777';
+
+const isHexColor = (value: any): value is string => {
+    if (typeof value !== 'string') return false;
+    const v = value.trim();
+    return /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(v);
+};
+
 const isClientThemeColor = (value: any): value is ClientThemeColor => {
     return (
         value === 'zinc' ||
@@ -28,7 +36,16 @@ const isClientThemeColor = (value: any): value is ClientThemeColor => {
         value === 'indigo' ||
         value === 'blue' ||
         value === 'rose' ||
-        value === 'emerald'
+        value === 'emerald' ||
+        value === 'teal' ||
+        value === 'sky' ||
+        value === 'violet' ||
+        value === 'fuchsia' ||
+        value === 'lime' ||
+        value === 'yellow' ||
+        value === 'red' ||
+        value === 'pink' ||
+        value === 'custom'
     );
 };
 
@@ -72,8 +89,23 @@ const normalizeWorkspaceUserDataV2 = (data: any): WorkspaceUserDataV2 | null => 
         const name = typeof raw.name === 'string' ? raw.name : '未命名客戶';
         const userData = raw.userData;
         if (!userData || typeof userData !== 'object') continue;
-        const color = isClientThemeColor(raw.color) ? raw.color : undefined;
-        clients[id] = { name, userData, color };
+
+        let color: ClientThemeColor | undefined;
+        let customColor: string | undefined;
+        if (raw.color === 'custom') {
+            if (isHexColor(raw.customColor)) {
+                color = 'custom';
+                customColor = raw.customColor.trim();
+            } else {
+                color = undefined;
+                customColor = undefined;
+            }
+        } else {
+            color = isClientThemeColor(raw.color) ? raw.color : undefined;
+            customColor = undefined;
+        }
+
+        clients[id] = { name, userData, color, customColor };
     }
 
     const cleanedIds = Object.keys(clients);
@@ -511,14 +543,17 @@ const App: React.FC = () => {
         KVStore.saveAnalysis(fbUser.uid, kvKey, data);
     }, [fbUser, isReadOnly, workspace]);
 
-    const renameWorkspaceClient = useCallback(async (clientId: string, params: { name: string; color?: ClientThemeColor }) => {
+    const renameWorkspaceClient = useCallback(async (clientId: string, params: { name: string; color?: ClientThemeColor; customColor?: string }) => {
         if (isReadOnly || !fbUser || !workspace) return;
         const trimmed = params.name.trim();
         if (!trimmed) return;
         if (!workspace.clients?.[clientId]) return;
 
         const currentClient = workspace.clients[clientId];
-        const nextColor = params.color || currentClient.color;
+        const nextColor = params.color ?? currentClient.color;
+        const nextCustomColor = nextColor === 'custom'
+            ? (isHexColor(params.customColor) ? params.customColor.trim() : (isHexColor(currentClient.customColor) ? currentClient.customColor!.trim() : DEFAULT_CUSTOM_CLIENT_COLOR))
+            : undefined;
         const nextUserData: UserData = {
             ...(currentClient.userData || createEmptyUserData(trimmed)),
             companyProfile: {
@@ -535,6 +570,7 @@ const App: React.FC = () => {
                     name: trimmed,
                     userData: nextUserData,
                     color: nextColor,
+                    customColor: nextCustomColor,
                 },
             },
         });
@@ -930,7 +966,7 @@ const App: React.FC = () => {
                 toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                 isMobileOpen={isMobileNavOpen}
                 onCloseMobile={() => setIsMobileNavOpen(false)}
-                workspaceClients={workspace ? Object.entries(workspace.clients).map(([id, c]) => ({ id, name: c.name, color: c.color })) : undefined}
+                workspaceClients={workspace ? Object.entries(workspace.clients).map(([id, c]) => ({ id, name: c.name, color: c.color, customColor: c.customColor })) : undefined}
                 currentClientId={workspace?.currentClientId}
                 currentClientName={workspace ? currentClientName : undefined}
                 isClientSwitching={isClientSwitching}
@@ -961,13 +997,23 @@ const App: React.FC = () => {
 
                     const newClientId = `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
                     const newClientUserData = createEmptyUserData(trimmed);
-                    const clientColor = (params.color || pickDefaultClientThemeColor(workspace));
+                    let clientColor: ClientThemeColor = (params.color || pickDefaultClientThemeColor(workspace));
+                    let clientCustomColor: string | undefined;
+                    if (clientColor === 'custom') {
+                        const incoming = params.customColor;
+                        if (isHexColor(incoming)) {
+                            clientCustomColor = incoming.trim();
+                        } else {
+                            clientColor = pickDefaultClientThemeColor(workspace);
+                            clientCustomColor = undefined;
+                        }
+                    }
 
                     const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
                         currentClientId: newClientId,
                         clients: {
                             ...workspace.clients,
-                            [newClientId]: { name: trimmed, userData: newClientUserData, color: clientColor },
+                            [newClientId]: { name: trimmed, userData: newClientUserData, color: clientColor, customColor: clientCustomColor },
                         },
                     });
 

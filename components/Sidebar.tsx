@@ -14,12 +14,12 @@ interface SidebarProps {
     isMobileOpen?: boolean;
     onCloseMobile?: () => void;
 
-    workspaceClients?: Array<{ id: string; name: string; color?: ClientThemeColor }>;
+    workspaceClients?: Array<{ id: string; name: string; color?: ClientThemeColor; customColor?: string }>;
     currentClientId?: string;
     currentClientName?: string;
     onChangeClient?: (clientId: string) => void | Promise<void>;
-    onAddClient?: (params: { name: string; color?: ClientThemeColor }) => void | Promise<void>;
-    onRenameClient?: (clientId: string, params: { name: string; color?: ClientThemeColor }) => void | Promise<void>;
+    onAddClient?: (params: { name: string; color?: ClientThemeColor; customColor?: string }) => void | Promise<void>;
+    onRenameClient?: (clientId: string, params: { name: string; color?: ClientThemeColor; customColor?: string }) => void | Promise<void>;
     onDeleteClient?: (clientId: string) => void | Promise<void>;
     isClientSwitching?: boolean;
 }
@@ -41,12 +41,20 @@ const Sidebar: React.FC<SidebarProps> = ({
     onDeleteClient,
     isClientSwitching,
 }) => {
+    const isHexColor = (value: any): value is string => {
+        if (typeof value !== 'string') return false;
+        const v = value.trim();
+        return /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(v);
+    };
+
     const [isAddingClient, setIsAddingClient] = useState(false);
     const [newClientName, setNewClientName] = useState('');
     const [newClientColor, setNewClientColor] = useState<ClientThemeColor>('stone');
+    const [newClientCustomColor, setNewClientCustomColor] = useState<string>('#777777');
     const [editingClientId, setEditingClientId] = useState<string | null>(null);
     const [editingClientName, setEditingClientName] = useState('');
     const [editingClientColor, setEditingClientColor] = useState<ClientThemeColor>('stone');
+    const [editingClientCustomColor, setEditingClientCustomColor] = useState<string>('#777777');
 
     const clientColorOptions = useMemo(() => {
         return [
@@ -60,18 +68,44 @@ const Sidebar: React.FC<SidebarProps> = ({
             { value: 'blue' as const, swatch: 'bg-blue-600', label: '海藍' },
             { value: 'indigo' as const, swatch: 'bg-indigo-600', label: '靛藍' },
             { value: 'neutral' as const, swatch: 'bg-neutral-600', label: '石墨黑' },
+            { value: 'teal' as const, swatch: 'bg-teal-500', label: '湖水綠' },
+            { value: 'sky' as const, swatch: 'bg-sky-500', label: '天空藍' },
+            { value: 'violet' as const, swatch: 'bg-violet-600', label: '紫羅蘭' },
+            { value: 'fuchsia' as const, swatch: 'bg-fuchsia-500', label: '洋紅' },
+            { value: 'lime' as const, swatch: 'bg-lime-500', label: '嫩綠' },
+            { value: 'yellow' as const, swatch: 'bg-yellow-400', label: '亮黃' },
+            { value: 'red' as const, swatch: 'bg-red-500', label: '赤紅' },
+            { value: 'pink' as const, swatch: 'bg-pink-500', label: '粉紅' },
         ];
     }, []);
 
     const getSwatchClass = (color?: ClientThemeColor) => {
+        if (color === 'custom') return 'bg-zinc-300 dark:bg-zinc-700';
         const found = clientColorOptions.find((o) => o.value === color);
         return found?.swatch || 'bg-stone-500';
     };
 
-    const ColorPicker: React.FC<{ value: ClientThemeColor; onChange: (v: ClientThemeColor) => void; label: string; }> = ({ value, onChange, label }) => (
+    const getCustomSwatchStyle = (color?: ClientThemeColor, customColor?: string): React.CSSProperties | undefined => {
+        if (color !== 'custom') return undefined;
+        if (!isHexColor(customColor)) return undefined;
+        return { backgroundColor: customColor.trim() };
+    };
+
+    const ColorPicker: React.FC<{
+        value: ClientThemeColor;
+        customColor?: string;
+        onChange: (v: ClientThemeColor) => void;
+        onCustomColorChange?: (v: string) => void;
+        label: string;
+    }> = ({ value, customColor, onChange, onCustomColorChange, label }) => {
+        const activePreset = clientColorOptions.find((o) => o.value === value);
+        const currentLabel = value === 'custom' ? '自訂' : (activePreset?.label || '大地棕');
+        const customHex = isHexColor(customColor) ? customColor!.trim() : '#777777';
+
+        return (
         <div className="space-y-2">
             <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto py-1 pr-1">
                 {clientColorOptions.map((opt) => {
                     const selected = opt.value === value;
                     return (
@@ -79,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             key={opt.value}
                             type="button"
                             onClick={() => onChange(opt.value)}
-                            className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors ${
+                            className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors flex-shrink-0 ${
                                 selected
                                     ? 'border-zinc-400 dark:border-zinc-500 ring-2 ring-zinc-500 ring-offset-2 ring-offset-zinc-50 dark:ring-offset-zinc-900'
                                     : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
@@ -99,9 +133,67 @@ const Sidebar: React.FC<SidebarProps> = ({
                         </button>
                     );
                 })}
+
+                {/* Custom */}
+                {(() => {
+                    const selected = value === 'custom';
+                    return (
+                        <button
+                            key="custom"
+                            type="button"
+                            onClick={() => onChange('custom')}
+                            className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors flex-shrink-0 ${
+                                selected
+                                    ? 'border-zinc-400 dark:border-zinc-500 ring-2 ring-zinc-500 ring-offset-2 ring-offset-zinc-50 dark:ring-offset-zinc-900'
+                                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                            }`}
+                            aria-label="自訂"
+                            aria-pressed={selected}
+                            title="自訂"
+                        >
+                            <span
+                                className="w-6 h-6 rounded-full bg-zinc-300 dark:bg-zinc-700"
+                                style={{ backgroundColor: customHex }}
+                            />
+                            {selected && (
+                                <span className="absolute inset-0 flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-white drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M20 6L9 17l-5-5" />
+                                    </svg>
+                                </span>
+                            )}
+                        </button>
+                    );
+                })()}
             </div>
+
+            <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                目前選擇：{currentLabel}{value === 'custom' ? `（${customHex.toUpperCase()}）` : ''}
+            </div>
+
+            {value === 'custom' && (
+                <div className="flex items-center gap-2">
+                    <input
+                        type="color"
+                        value={customHex}
+                        onChange={(e) => onCustomColorChange?.(e.target.value)}
+                        className="h-10 w-12 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+                        aria-label="選擇自訂顏色"
+                    />
+                    <input
+                        type="text"
+                        inputMode="text"
+                        value={customHex}
+                        onChange={(e) => onCustomColorChange?.(e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-lg text-sm bg-white border border-zinc-200 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
+                        placeholder="#RRGGBB"
+                        aria-label="自訂顏色 HEX"
+                    />
+                </div>
+            )}
         </div>
-    );
+        );
+    };
 
     const activeItemClass = 'text-zinc-900 bg-zinc-200/50 dark:bg-zinc-800 dark:text-zinc-100';
 
@@ -239,7 +331,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         setIsAddingClient(false);
                                         setNewClientName('');
                                         try {
-                                            await onAddClient({ name: trimmed, color: newClientColor });
+                                            await onAddClient({
+                                                name: trimmed,
+                                                color: newClientColor,
+                                                customColor: newClientColor === 'custom' ? newClientCustomColor : undefined,
+                                            });
                                         } catch {
                                             // ignore
                                         }
@@ -253,7 +349,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     />
                                     <ColorPicker
                                         value={newClientColor}
+                                        customColor={newClientCustomColor}
                                         onChange={setNewClientColor}
+                                        onCustomColorChange={setNewClientCustomColor}
                                         label="品牌主題色"
                                     />
                                     <div className="flex gap-2">
@@ -285,6 +383,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     const disabled = isReadOnly || !onChangeClient || isClientSwitching;
                                     const isEditing = editingClientId === c.id;
                                     const swatchClass = getSwatchClass(c.color);
+                                    const swatchStyle = getCustomSwatchStyle(c.color, c.customColor);
                                     const baseClass = 'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium';
                                     const activeClass = 'text-zinc-900 bg-white border border-zinc-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100';
                                     const hoverClass = 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200';
@@ -315,7 +414,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                     </span>
                                                 )}
 
-                                                <span className={`flex-shrink-0 w-3.5 h-3.5 rounded-full ${swatchClass}`} aria-hidden />
+                                                <span className={`flex-shrink-0 w-3.5 h-3.5 rounded-full ${swatchClass}`} style={swatchStyle} aria-hidden />
 
                                                 {!isCollapsed && !isEditing && (
                                                     <span className="truncate flex-1">{c.name}</span>
@@ -331,7 +430,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                             setEditingClientId(null);
                                                             setEditingClientName('');
                                                             try {
-                                                                await onRenameClient?.(c.id, { name: trimmed, color: editingClientColor });
+                                                                await onRenameClient?.(c.id, {
+                                                                    name: trimmed,
+                                                                    color: editingClientColor,
+                                                                    customColor: editingClientColor === 'custom' ? editingClientCustomColor : undefined,
+                                                                });
                                                             } catch {
                                                                 // ignore
                                                             }
@@ -345,7 +448,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                         />
                                                         <ColorPicker
                                                             value={editingClientColor}
+                                                            customColor={editingClientCustomColor}
                                                             onChange={setEditingClientColor}
+                                                            onCustomColorChange={setEditingClientCustomColor}
                                                             label="品牌主題色"
                                                         />
                                                         <div className="flex gap-2">
@@ -379,6 +484,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                                 setEditingClientId(c.id);
                                                                 setEditingClientName(c.name);
                                                                 setEditingClientColor(c.color || 'stone');
+                                                                setEditingClientCustomColor(isHexColor(c.customColor) ? c.customColor!.trim() : '#777777');
                                                             }}
                                                             className="px-2 py-1 rounded-md text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800"
                                                             disabled={Boolean(isClientSwitching) || !onRenameClient}

@@ -4,6 +4,7 @@ import FileUpload from './FileUpload';
 import Modal from './Modal';
 import type { NormalizedPost, DataSet, SelectionState, AllMonthlyFollowerData, MonthlyFollowerData, BaseFollowerData, CompanyProfile, AnalysisData, UserData } from '../types';
 import { format } from 'date-fns/format';
+import { addMonths } from 'date-fns/addMonths';
 import PlatformIcon from './PlatformIcon';
 import * as KVStore from '../utils/kvStore';
 
@@ -330,6 +331,18 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
         setMonthlyData(dataForMonth);
         setIsMonthlyDirty(false);
     }, [allMonthlyFollowerData, monthlyDrafts, selectedMonth]);
+
+    const shiftSelectedMonth = (delta: number) => {
+        const safe = (m: string) => {
+            const trimmed = (m || '').trim();
+            if (!/^\d{4}-\d{2}$/.test(trimmed)) return format(new Date(), 'yyyy-MM');
+            return trimmed;
+        };
+        const current = safe(selectedMonth);
+        const baseDate = new Date(`${current}-01T00:00:00`);
+        const next = addMonths(baseDate, delta);
+        setSelectedMonth(format(next, 'yyyy-MM'));
+    };
     
     useEffect(() => {
         if (isBaseDirty) return;
@@ -743,9 +756,38 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                     </div>
                 </div>
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">每月粉絲變化管理</h2>
-                        <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="text-sm bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-zinc-300 dark:focus:ring-zinc-700"/>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => shiftSelectedMonth(-1)}
+                                className="h-10 w-10 inline-flex items-center justify-center rounded-lg bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                aria-label="上一月"
+                                title="上一月"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M15 18l-6-6 6-6" />
+                                </svg>
+                            </button>
+                            <input
+                                type="month"
+                                value={selectedMonth}
+                                onChange={e => setSelectedMonth(e.target.value)}
+                                className="h-10 text-sm bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg px-3 outline-none focus:ring-2 focus:ring-zinc-300/60 dark:focus:ring-zinc-700"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => shiftSelectedMonth(1)}
+                                className="h-10 w-10 inline-flex items-center justify-center rounded-lg bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                aria-label="下一月"
+                                title="下一月"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M9 18l6-6-6-6" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-3">

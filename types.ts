@@ -74,6 +74,8 @@ export interface WorkspaceClient {
   name: string;
   userData: UserData;
   color?: ClientThemeColor;
+  /** When color === 'custom', this is the hex color (e.g. #FFAA00). */
+  customColor?: string;
 }
 
 // KV state.userData supports both the legacy single-client shape (UserData)
@@ -117,7 +119,15 @@ export type ThemeColor =
   | 'indigo'
   | 'blue'
   | 'rose'
-  | 'emerald';
+  | 'emerald'
+  | 'teal'
+  | 'sky'
+  | 'violet'
+  | 'fuchsia'
+  | 'lime'
+  | 'yellow'
+  | 'red'
+  | 'pink';
 
-// Client theme colors: allow a richer palette; defaults should use earth tones.
-export type ClientThemeColor = ThemeColor;
+// Client theme colors: preset palette + optional custom hex color.
+export type ClientThemeColor = ThemeColor | 'custom';
