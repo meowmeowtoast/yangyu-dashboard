@@ -1,4 +1,5 @@
 import type { NormalizedPost } from '../types';
+import { parse as parseDate } from 'date-fns/parse';
 
 declare const Papa: any;
 
@@ -23,6 +24,30 @@ const inferPlatformFromPermalink = (rows: any[]): 'Facebook' | 'Instagram' | nul
     if (firstLink.includes('instagram.com')) return 'Instagram';
     if (firstLink.includes('facebook.com')) return 'Facebook';
     return null;
+};
+
+const parseMetaPublishTime = (raw: any): Date => {
+    const value = String(raw ?? '').trim();
+    if (!value) return new Date('');
+
+    // 1) Try native parsing first (handles ISO strings).
+    const native = new Date(value);
+    if (!isNaN(native.getTime())) return native;
+
+    // 2) Meta exports commonly look like: 12/05/2025 06:48 (MM/dd/yyyy HH:mm)
+    // Be liberal with single-digit month/day/hour.
+    const candidates = [
+        'MM/dd/yyyy HH:mm',
+        'M/d/yyyy H:mm',
+        'MM/dd/yyyy H:mm',
+        'M/d/yyyy HH:mm',
+    ];
+    for (const fmt of candidates) {
+        const d = parseDate(value, fmt, new Date());
+        if (!isNaN(d.getTime())) return d;
+    }
+
+    return new Date('');
 };
 
 const parseAndNormalize = (file: File): Promise<NormalizedPost[]> => {
@@ -70,11 +95,13 @@ const parseAndNormalize = (file: File): Promise<NormalizedPost[]> => {
                             content = row['說明'] || row['標題'] || '';
                         } else if (platform === 'Instagram') {
                             likes = parseInt(row['按讚數'], 10) || 0;
-                            comments = parseInt(row['留言數'], 10) || 0;
+                            // IG story exports often use '回覆次數' instead of '留言數'.
+                            comments = parseInt(row['留言數'], 10) || parseInt(row['回覆次數'], 10) || 0;
                             shares = parseInt(row['分享'], 10) || 0;
                             saves = parseInt(row['儲存次數'], 10) || 0;
                             impressions = parseInt(row['瀏覽次數'], 10) || 0;
-                            content = row['說明'] || '';
+                            // Stories frequently have empty description; fall back to post type for readability.
+                            content = row['說明'] || row['標題'] || row['貼文類型'] || '';
                         }
 
                         const totalEngagement = likes + comments + shares + saves;
@@ -82,7 +109,7 @@ const parseAndNormalize = (file: File): Promise<NormalizedPost[]> => {
                         const post: NormalizedPost = {
                             platform,
                             content: content,
-                            publishTime: new Date(row['發佈時間']),
+                            publishTime: parseMetaPublishTime(row['發佈時間']),
                             reach: parseInt(row['觸及人數'], 10) || 0,
                             impressions: impressions,
                             likes: likes,
