@@ -1057,14 +1057,33 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                                     {isExpanded && (
                                         <div className="border-t border-zinc-200 bg-white max-h-60 overflow-y-auto">
                                             <table className="w-full text-xs text-left">
-                                                <thead className="text-zinc-500 bg-zinc-50 sticky top-0"><tr><th className="px-3 py-2 w-8"></th><th className="px-3 py-2">內容</th><th className="px-3 py-2 w-24">日期</th></tr></thead>
+                                                <thead className="text-zinc-500 bg-zinc-50 sticky top-0">
+                                                    <tr>
+                                                        <th className="px-3 py-2 w-8"></th>
+                                                        <th className="px-3 py-2 w-24">平台</th>
+                                                        <th className="px-3 py-2 w-40">貼文類型</th>
+                                                        <th className="px-3 py-2">內容</th>
+                                                        <th className="px-3 py-2 w-28">日期</th>
+                                                    </tr>
+                                                </thead>
                                                 <tbody>
                                                     {sortedPosts.map(post => (
                                                         <tr key={post.permalink} className="border-t border-zinc-100 hover:bg-zinc-50">
                                                             <td className="px-3 py-2 text-center">
                                                                 <input type="checkbox" checked={!!selectionState.enabledPostPermalinks[post.permalink]} onChange={(e) => handlePostToggle(post.permalink, dataSet.id, e.target.checked)} className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500" />
                                                             </td>
-                                                            <td className="px-3 py-2 text-zinc-700 truncate max-w-[240px]">{post.content}</td>
+                                                            <td className="px-3 py-2 text-zinc-600 whitespace-nowrap">
+                                                                <span className="inline-flex items-center gap-1">
+                                                                    <PlatformIcon platform={post.platform} />
+                                                                    <span className="text-zinc-600">{post.platform}</span>
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 py-2">
+                                                                <span className="inline-flex max-w-[10rem] truncate px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600" title={post.postType || '未知'}>
+                                                                    {post.postType || '未知'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 py-2 text-zinc-700 truncate max-w-[320px]">{post.content}</td>
                                                             <td className="px-3 py-2 text-zinc-500 whitespace-nowrap">{format(post.publishTime, 'MMM d, HH:mm')}</td>
                                                         </tr>
                                                     ))}
