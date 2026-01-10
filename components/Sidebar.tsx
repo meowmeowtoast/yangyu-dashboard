@@ -96,24 +96,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     const clientColorOptions = useMemo(() => {
         return [
-            { value: 'zinc' as const, swatch: 'bg-zinc-500', label: '岩灰' },
+            // Earthy defaults (reduce similar high-saturation options)
             { value: 'stone' as const, swatch: 'bg-stone-500', label: '大地棕' },
-            { value: 'amber' as const, swatch: 'bg-amber-400', label: '沙金' },
-            { value: 'orange' as const, swatch: 'bg-orange-400', label: '杏橘' },
-            { value: 'slate' as const, swatch: 'bg-slate-600', label: '墨藍灰' },
-            { value: 'rose' as const, swatch: 'bg-rose-500', label: '莓紅' },
-            { value: 'emerald' as const, swatch: 'bg-emerald-500', label: '森林綠' },
-            { value: 'blue' as const, swatch: 'bg-blue-600', label: '海藍' },
-            { value: 'indigo' as const, swatch: 'bg-indigo-600', label: '靛藍' },
+            { value: 'amber' as const, swatch: 'bg-amber-500', label: '沙金' },
+            { value: 'orange' as const, swatch: 'bg-orange-500', label: '陶橘' },
+            { value: 'slate' as const, swatch: 'bg-slate-600', label: '板岩藍灰' },
+            { value: 'zinc' as const, swatch: 'bg-zinc-500', label: '岩灰' },
             { value: 'neutral' as const, swatch: 'bg-neutral-600', label: '石墨黑' },
-            { value: 'teal' as const, swatch: 'bg-teal-500', label: '湖水綠' },
-            { value: 'sky' as const, swatch: 'bg-sky-500', label: '天空藍' },
-            { value: 'violet' as const, swatch: 'bg-violet-600', label: '紫羅蘭' },
-            { value: 'fuchsia' as const, swatch: 'bg-fuchsia-500', label: '洋紅' },
-            { value: 'lime' as const, swatch: 'bg-lime-500', label: '嫩綠' },
-            { value: 'yellow' as const, swatch: 'bg-yellow-400', label: '亮黃' },
-            { value: 'red' as const, swatch: 'bg-red-500', label: '赤紅' },
-            { value: 'pink' as const, swatch: 'bg-pink-500', label: '粉紅' },
+            { value: 'emerald' as const, swatch: 'bg-emerald-600', label: '森林綠' },
+            { value: 'teal' as const, swatch: 'bg-teal-600', label: '湖水綠' },
         ];
     }, []);
 
@@ -180,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             key="custom"
                             type="button"
                             onClick={() => onChange('custom')}
-                            className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors ${
+                            className={`relative w-9 h-9 rounded-full border border-dashed flex items-center justify-center transition-colors ${
                                 selected
                                     ? 'border-zinc-400 dark:border-zinc-500 ring-2 ring-zinc-500 ring-offset-2 ring-offset-zinc-50 dark:ring-offset-zinc-900'
                                     : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
@@ -190,7 +181,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             title="自訂"
                         >
                             <span
-                                className="w-6 h-6 rounded-full bg-zinc-300 dark:bg-zinc-700"
+                                className="w-6 h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 ring-1 ring-zinc-400/60 dark:ring-zinc-500/60 shadow-inner"
                                 style={{ backgroundColor: customHex }}
                             />
                             {selected && (
