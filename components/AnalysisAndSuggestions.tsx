@@ -18,11 +18,14 @@ const EditIcon: React.FC = () => (
 const AnalysisAndSuggestions: React.FC<Props> = ({ savedData, onSave, isReadOnly, displaySettings }) => {
     const [data, setData] = useState<AnalysisData>(savedData);
     const [isEditing, setIsEditing] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
 
     const settings: AnalysisDisplaySettings = displaySettings || { insights: true, contentSuggestions: true, platformAdjustments: true };
     const anyVisible = settings.insights || settings.contentSuggestions || settings.platformAdjustments;
 
     useEffect(() => {
+        if (!isReadOnly && isDirty) return;
+
         setData(savedData);
         const visibleEmpty = (
             (!settings.insights || !savedData.insights) &&
@@ -40,16 +43,19 @@ const AnalysisAndSuggestions: React.FC<Props> = ({ savedData, onSave, isReadOnly
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setData(prev => ({ ...prev, [name]: value }));
+        if (!isReadOnly) setIsDirty(true);
     };
 
     const handleSave = () => {
         if (isReadOnly) return;
         onSave(data);
         setIsEditing(false);
+        setIsDirty(false);
     };
 
     const handleCancel = () => {
         setData(savedData);
+        setIsDirty(false);
         const anySavedVisible = (
             (settings.insights && !!savedData.insights) ||
             (settings.contentSuggestions && !!savedData.contentSuggestions) ||

@@ -359,6 +359,14 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     const [analysisData, setAnalysisData] = useState<AnalysisData>({ insights: '', contentSuggestions: '', platformAdjustments: '' });
 
+    const isSameAnalysisData = (a: AnalysisData, b: AnalysisData) => {
+        return (
+            String(a.insights || '') === String(b.insights || '') &&
+            String(a.contentSuggestions || '') === String(b.contentSuggestions || '') &&
+            String(a.platformAdjustments || '') === String(b.platformAdjustments || '')
+        );
+    };
+
     const { currentPeriodPosts, previousPeriodPosts, dateRangeLabel, storageKey, currentStartDate, currentEndDate } = useMemo(() => {
         let startDate: Date | null = null;
         let endDate: Date | null = null;
@@ -454,10 +462,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     useEffect(() => {
         if (isReadOnly) {
-            setAnalysisData(readOnlyAnalysis || { insights: '', contentSuggestions: '', platformAdjustments: '' });
+            const next = readOnlyAnalysis || { insights: '', contentSuggestions: '', platformAdjustments: '' };
+            setAnalysisData((prev) => (isSameAnalysisData(prev, next) ? prev : next));
         } else if (storageKey && allAnalyses) {
             const loadedAnalysis = allAnalyses[storageKey];
-            setAnalysisData(loadedAnalysis || { insights: '', contentSuggestions: '', platformAdjustments: '' });
+            const next = loadedAnalysis || { insights: '', contentSuggestions: '', platformAdjustments: '' };
+            setAnalysisData((prev) => (isSameAnalysisData(prev, next) ? prev : next));
         }
     }, [storageKey, isReadOnly, readOnlyAnalysis, allAnalyses]);
 
