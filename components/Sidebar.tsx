@@ -237,8 +237,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <div className={`min-w-0 ${isCollapsed ? 'w-full flex justify-center md:justify-center' : ''}`}>
                         {/* Mobile: always show full title */}
                         <div className="md:hidden min-w-0">
-                            <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none truncate">YANGYU</div>
-                            <div className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 leading-none mt-0.5 truncate">社群儀表板</div>
+                            <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
                         </div>
 
                         {/* Desktop: collapse shows only Y */}
@@ -247,8 +246,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none text-center">Y</div>
                             ) : (
                                 <>
-                                    <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none truncate">YANGYU</div>
-                                    <div className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 leading-none mt-0.5 truncate">社群儀表板</div>
+                                    <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
                                 </>
                             )}
                         </div>
@@ -401,19 +399,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                 className={`${baseClass} pr-2 text-left ${disabled ? 'cursor-not-allowed' : ''} ${isActive ? activeClass : hoverClass}`}
                                                 title={isCollapsed ? c.name : undefined}
                                             >
-                                                {!isCollapsed && isActive && (
-                                                    <span className="text-zinc-300 dark:text-zinc-700" aria-hidden>
-                                                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                                                            <circle cx="6" cy="6" r="1.2" />
-                                                            <circle cx="10" cy="6" r="1.2" />
-                                                            <circle cx="14" cy="6" r="1.2" />
-                                                            <circle cx="6" cy="10" r="1.2" />
-                                                            <circle cx="10" cy="10" r="1.2" />
-                                                            <circle cx="14" cy="10" r="1.2" />
-                                                        </svg>
-                                                    </span>
-                                                )}
-
                                                 <span className={`flex-shrink-0 w-3.5 h-3.5 rounded-full ${swatchClass}`} style={swatchStyle} aria-hidden />
 
                                                 {!isCollapsed && !isEditing && (

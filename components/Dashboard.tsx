@@ -705,41 +705,46 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <KpiCard title="互動率" value={kpiData.engagementRate.toFixed(2)} unit="%" change={calculateChange(kpiData.engagementRate, prevKpiData.engagementRate)} trendData={kpiTrendData.engagementRate} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
-                    <PerformanceLineChart data={currentPeriodPosts} />
-                </div>
+            {/* 1) 每日成效趨勢（互動與觸及） - Full width */}
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">每日成效趨勢（互動與觸及）</h3>
+                <PerformanceLineChart data={currentPeriodPosts} />
+            </div>
+
+            {/* 2) 平台占比 + 互動類型分佈 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
                     <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">平台占比</h3>
                     <PlatformPieChart data={currentPeriodPosts} />
                 </div>
-            </div>
-
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">粉絲成長</h3>
-                <FollowerGrowth posts={currentPeriodPosts} allMonthlyData={allMonthlyFollowerData} baseData={baseFollowerData} />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
                     <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">互動類型分佈</h3>
                     <PostTypeBarChart data={currentPeriodPosts} />
+                </div>
+            </div>
+
+            {/* 3) 粉絲成長 + 發文熱點 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">粉絲成長</h3>
+                    <FollowerGrowth posts={currentPeriodPosts} allMonthlyData={allMonthlyFollowerData} baseData={baseFollowerData} />
                 </div>
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
                     <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">發文熱點</h3>
                     <PostingHeatmap data={currentPeriodPosts} onCellHover={setHeatmapTooltip} />
                 </div>
             </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                 <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">全部貼文</h3>
-                    <AllPostsTable data={currentPeriodPosts} onPostSelect={handlePostSelect} />
-                </div>
-                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
-                     <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">表現最佳</h3>
-                    <TopPostsTable data={currentPeriodPosts} onPostSelect={handlePostSelect} />
-                </div>
+
+            {/* 4) 表現最佳 - Full width */}
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">表現最佳</h3>
+                <TopPostsTable data={currentPeriodPosts} onPostSelect={handlePostSelect} />
+            </div>
+
+            {/* 5) 全部貼文 - Full width */}
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wider">全部貼文</h3>
+                <AllPostsTable data={currentPeriodPosts} onPostSelect={handlePostSelect} />
             </div>
 
             <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 p-1 rounded-2xl">
