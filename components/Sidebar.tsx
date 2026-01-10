@@ -96,15 +96,22 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     const clientColorOptions = useMemo(() => {
         return [
-            // Earthy defaults (reduce similar high-saturation options)
+            // Earthy + distinct accents (avoid too many near-duplicates)
             { value: 'stone' as const, swatch: 'bg-stone-500', label: '大地棕' },
             { value: 'amber' as const, swatch: 'bg-amber-500', label: '沙金' },
             { value: 'orange' as const, swatch: 'bg-orange-500', label: '陶橘' },
             { value: 'slate' as const, swatch: 'bg-slate-600', label: '板岩藍灰' },
             { value: 'zinc' as const, swatch: 'bg-zinc-500', label: '岩灰' },
-            { value: 'neutral' as const, swatch: 'bg-neutral-600', label: '石墨黑' },
+            { value: 'neutral' as const, swatch: 'bg-neutral-700', label: '石墨黑' },
+
             { value: 'emerald' as const, swatch: 'bg-emerald-600', label: '森林綠' },
             { value: 'teal' as const, swatch: 'bg-teal-600', label: '湖水綠' },
+            { value: 'lime' as const, swatch: 'bg-lime-600', label: '苔蘚綠' },
+
+            { value: 'blue' as const, swatch: 'bg-blue-600', label: '海藍' },
+            { value: 'indigo' as const, swatch: 'bg-indigo-600', label: '靛藍' },
+            { value: 'violet' as const, swatch: 'bg-violet-600', label: '紫羅蘭' },
+            { value: 'rose' as const, swatch: 'bg-rose-600', label: '莓紅' },
         ];
     }, []);
 
@@ -201,7 +208,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {value === 'custom' && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                     <input
                         type="color"
                         value={customHex}
@@ -214,7 +221,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         inputMode="text"
                         value={customHex}
                         onChange={(e) => onCustomColorChange?.(e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-lg text-sm bg-white border border-zinc-200 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
+                        className="min-w-0 flex-1 px-3 py-2 rounded-lg text-sm bg-white border border-zinc-200 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
                         placeholder="#RRGGBB"
                         aria-label="自訂顏色 HEX"
                     />
@@ -249,6 +256,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             }`}
             title={isCollapsed ? label : undefined}
         >
+
+                            {/* Plus marker for discoverability */}
+                            <span
+                                className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-white border border-zinc-200 text-zinc-600 text-[11px] leading-[14px] text-center shadow-sm dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
+                                aria-hidden
+                            >
+                                +
+                            </span>
+
             <span className="flex-shrink-0">{icon}</span>
             {!isCollapsed && <span className="truncate">{label}</span>}
         </button>
