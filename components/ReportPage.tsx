@@ -11,6 +11,11 @@ import AnalysisAndSuggestions from './AnalysisAndSuggestions';
 
 // Simplified version for report rendering
 const AllPostsTableReport: React.FC<{ data: NormalizedPost[] }> = ({ data }) => {
+    const sorted = [...(data || [])].sort((a, b) => {
+        const at = (a.publishTime instanceof Date ? a.publishTime : new Date(a.publishTime as any)).getTime();
+        const bt = (b.publishTime instanceof Date ? b.publishTime : new Date(b.publishTime as any)).getTime();
+        return at - bt;
+    });
     return (
          <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-slate-500 report-table" style={{borderCollapse: 'collapse'}}>
@@ -25,7 +30,7 @@ const AllPostsTableReport: React.FC<{ data: NormalizedPost[] }> = ({ data }) => 
                     </tr>
                 </thead>
                 <tbody>
-                    {data.map((post) => (
+                    {sorted.map((post) => (
                         <tr key={post.permalink} className="border-t">
                             <td className="px-2 py-1 border">{post.platform.substring(0,2)}</td>
                             <td className="px-2 py-1 border whitespace-nowrap">{format(post.publishTime, 'yy/MM/dd')}</td>

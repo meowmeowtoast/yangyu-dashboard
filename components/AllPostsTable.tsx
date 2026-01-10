@@ -20,10 +20,16 @@ const AllPostsTable: React.FC<{ data: NormalizedPost[]; onPostSelect: (post: Nor
     const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('All');
 
     const filteredPosts = useMemo(() => {
-        if (platformFilter === 'All') {
-            return data;
-        }
-        return data.filter(post => post.platform === platformFilter);
+        const base = platformFilter === 'All'
+            ? data
+            : data.filter(post => post.platform === platformFilter);
+
+        // Old -> new
+        return [...base].sort((a, b) => {
+            const at = (a.publishTime instanceof Date ? a.publishTime : new Date(a.publishTime as any)).getTime();
+            const bt = (b.publishTime instanceof Date ? b.publishTime : new Date(b.publishTime as any)).getTime();
+            return at - bt;
+        });
     }, [data, platformFilter]);
 
     const platforms: PlatformFilter[] = ['All', 'Facebook', 'Instagram'];

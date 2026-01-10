@@ -267,6 +267,18 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
     const [editingSharedViewId, setEditingSharedViewId] = useState<string | null>(null);
     const [editingSharedViewLabel, setEditingSharedViewLabel] = useState<string>('');
 
+    const sortedDataSets = useMemo(() => {
+        const toTime = (ds: DataSet) => {
+            const t = Date.parse(ds.uploadDate || '');
+            return Number.isFinite(t) ? t : 0;
+        };
+        return [...(dataSets || [])].sort((a, b) => {
+            const diff = toTime(a) - toTime(b);
+            if (diff !== 0) return diff;
+            return String(a.id).localeCompare(String(b.id));
+        });
+    }, [dataSets]);
+
     // Restore lightweight view state (not drafts) per client
     useEffect(() => {
         try {
@@ -756,16 +768,23 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                         <button onClick={() => setIsAddModalOpen(true)} className="px-3 py-1.5 bg-zinc-100 text-zinc-700 text-xs font-medium rounded-lg hover:bg-zinc-200">新增檔案</button>
                     </div>
                     <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                        {dataSets.map((dataSet) => {
+                        {sortedDataSets.map((dataSet) => {
                             const isExpanded = expandedDataSetId === dataSet.id;
                             const enabledPostsCount = dataSet.posts.filter(p => !!selectionState.enabledPostPermalinks[p.permalink]).length;
+
+                            const getPostTime = (p: NormalizedPost) => {
+                                const d = (p.publishTime instanceof Date ? p.publishTime : new Date(p.publishTime as any));
+                                const t = d.getTime();
+                                return Number.isFinite(t) ? t : 0;
+                            };
+
+                            const sortedPosts = [...(dataSet.posts || [])].sort((a, b) => getPostTime(a) - getPostTime(b));
                             
                             const { dateRange, platforms } = (() => {
-                                if (!dataSet.posts || dataSet.posts.length === 0) return { dateRange: 'N/A', platforms: [] as ('Facebook' | 'Instagram')[] };
-                                const dates = dataSet.posts.map(p => p.publishTime);
-                                const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-                                const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-                                const platformSet = new Set(dataSet.posts.map(p => p.platform));
+                                if (!sortedPosts || sortedPosts.length === 0) return { dateRange: 'N/A', platforms: [] as ('Facebook' | 'Instagram')[] };
+                                const minDate = new Date(getPostTime(sortedPosts[0]));
+                                const maxDate = new Date(getPostTime(sortedPosts[sortedPosts.length - 1]));
+                                const platformSet = new Set(sortedPosts.map(p => p.platform));
                                 return {
                                     dateRange: `${format(minDate, 'MMM d')} - ${format(maxDate, 'MMM d, yyyy')}`,
                                     platforms: Array.from(platformSet) as ('Facebook' | 'Instagram')[],
@@ -793,7 +812,15 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                                             <table className="w-full text-xs text-left">
                                                 <thead className="text-zinc-500 bg-zinc-50 sticky top-0"><tr><th className="px-3 py-2 w-8"></th><th className="px-3 py-2">內容</th><th className="px-3 py-2 w-24">日期</th></tr></thead>
                                                 <tbody>
-                                                    {dataSet.posts.map(post => (<tr key={post.permalink} className="border-t border-zinc-100 hover:bg-zinc-50"><td className="px-3 py-2 text-center"><input type="checkbox" checked={!!selectionState.enabledPostPermalinks[post.permalink]} onChange={(e) => handlePostToggle(post.permalink, dataSet.id, e.target.checked)} className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500" /></td><td className="px-3 py-2 text-zinc-700 truncate max-w-[200px]">{post.content}</td><td className="px-3 py-2 text-zinc-500 whitespace-nowrap">{format(post.publishTime, 'MMM d, HH:mm')}</td></tr>))}
+                                                    {sortedPosts.map(post => (
+                                                        <tr key={post.permalink} className="border-t border-zinc-100 hover:bg-zinc-50">
+                                                            <td className="px-3 py-2 text-center">
+                                                                <input type="checkbox" checked={!!selectionState.enabledPostPermalinks[post.permalink]} onChange={(e) => handlePostToggle(post.permalink, dataSet.id, e.target.checked)} className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500" />
+                                                            </td>
+                                                            <td className="px-3 py-2 text-zinc-700 truncate max-w-[200px]">{post.content}</td>
+                                                            <td className="px-3 py-2 text-zinc-500 whitespace-nowrap">{format(post.publishTime, 'MMM d, HH:mm')}</td>
+                                                        </tr>
+                                                    ))}
                                                 </tbody>
                                             </table>
                                         </div>
