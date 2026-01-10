@@ -105,7 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         return (
         <div className="space-y-2">
             <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</div>
-            <div className="flex items-center gap-2 overflow-x-auto py-1 pr-1">
+            <div className="grid grid-cols-5 gap-2">
                 {clientColorOptions.map((opt) => {
                     const selected = opt.value === value;
                     return (
@@ -113,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             key={opt.value}
                             type="button"
                             onClick={() => onChange(opt.value)}
-                            className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors flex-shrink-0 ${
+                            className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors ${
                                 selected
                                     ? 'border-zinc-400 dark:border-zinc-500 ring-2 ring-zinc-500 ring-offset-2 ring-offset-zinc-50 dark:ring-offset-zinc-900'
                                     : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
@@ -142,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             key="custom"
                             type="button"
                             onClick={() => onChange('custom')}
-                            className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors flex-shrink-0 ${
+                            className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors ${
                                 selected
                                     ? 'border-zinc-400 dark:border-zinc-500 ring-2 ring-zinc-500 ring-offset-2 ring-offset-zinc-50 dark:ring-offset-zinc-900'
                                     : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
