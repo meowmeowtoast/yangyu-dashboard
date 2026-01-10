@@ -128,7 +128,7 @@ export const clearAllUserDataForUser = async (userId: string) => {
     await fetchJson('/api/state', { method: 'DELETE', credentials: 'include' });
 };
 
-export const onAnalysesSnapshot = (userId: string, callback: (data: Record<string, AnalysisData>) => void) => {
+export const onAnalysesSnapshot = (userId: string, callback: (data: Record<string, AnalysisData> | null) => void) => {
     if (userId === 'local-guest-user') {
         const analyses = loadAllAnalyses();
         setTimeout(() => callback(analyses), 0);
@@ -143,7 +143,7 @@ export const onAnalysesSnapshot = (userId: string, callback: (data: Record<strin
             callback((data?.analyses as Record<string, AnalysisData>) ?? {});
         } catch {
             if (cancelled) return;
-            callback({});
+            callback(null);
         }
     };
 

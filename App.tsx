@@ -13,6 +13,29 @@ import { exportDataAsJson, importDataFromFile } from './utils/backup';
 
 
 const WORKSPACE_ANALYSIS_DELIM = '::';
+const LOCAL_STORAGE_CURRENT_CLIENT_ID_KEY = 'yy-report.currentClientId';
+
+const getLocalPreferredClientId = (): string => {
+    try {
+        if (typeof window === 'undefined') return '';
+        return window.localStorage.getItem(LOCAL_STORAGE_CURRENT_CLIENT_ID_KEY) || '';
+    } catch {
+        return '';
+    }
+};
+
+const setLocalPreferredClientId = (clientId: string) => {
+    try {
+        if (typeof window === 'undefined') return;
+        if (clientId) {
+            window.localStorage.setItem(LOCAL_STORAGE_CURRENT_CLIENT_ID_KEY, clientId);
+        } else {
+            window.localStorage.removeItem(LOCAL_STORAGE_CURRENT_CLIENT_ID_KEY);
+        }
+    } catch {
+        // ignore
+    }
+};
 
 // Default palette: earth tones (requested) for new clients.
 const CLIENT_THEME_COLORS: ClientThemeColor[] = ['stone', 'amber', 'orange', 'zinc'];
@@ -493,6 +516,14 @@ const App: React.FC = () => {
                 // If we are currently restoring, ignore realtime updates to prevent conflicts
                 if (isRestoring) return;
 
+                // When the cloud fetch fails, kvStore calls back with null.
+                // Do NOT overwrite current in-memory state with empty data.
+                if (data == null) {
+                    console.warn('Cloud state unavailable; keeping current state.');
+                    setIsLoading(false);
+                    return;
+                }
+
                 const normalizedWorkspace = normalizeWorkspaceUserDataV2(data);
                 if (normalizedWorkspace) {
                     const currentRev = workspaceRef.current?.rev ?? 0;
@@ -502,10 +533,26 @@ const App: React.FC = () => {
                         return;
                     }
 
-                    const clientId = normalizedWorkspace.currentClientId;
-                    setWorkspace(normalizedWorkspace);
+                    // IMPORTANT: Avoid syncing UI navigation (selected client) across devices.
+                    // Prefer a local per-device selection when it exists and is valid.
+                    const localPreferred = getLocalPreferredClientId();
+                    const currentLocal = workspaceRef.current?.currentClientId || '';
+                    const effectiveClientId =
+                        (localPreferred && normalizedWorkspace.clients?.[localPreferred] ? localPreferred : '') ||
+                        (currentLocal && normalizedWorkspace.clients?.[currentLocal] ? currentLocal : '') ||
+                        (normalizedWorkspace.currentClientId && normalizedWorkspace.clients?.[normalizedWorkspace.currentClientId] ? normalizedWorkspace.currentClientId : '') ||
+                        Object.keys(normalizedWorkspace.clients || {})[0] ||
+                        '';
 
-                    const clientUserData = normalizedWorkspace.clients?.[clientId]?.userData;
+                    const mergedWorkspace: WorkspaceUserDataV2 = {
+                        ...normalizedWorkspace,
+                        currentClientId: effectiveClientId,
+                    };
+
+                    setWorkspace(mergedWorkspace);
+                    setLocalPreferredClientId(effectiveClientId);
+
+                    const clientUserData = mergedWorkspace.clients?.[effectiveClientId]?.userData;
                     const sanitized = sanitizeAndValidateData(clientUserData);
                     if (sanitized) {
                         setAllUserData(sanitized);
@@ -534,6 +581,10 @@ const App: React.FC = () => {
             });
             unsubAnalyses = KVStore.onAnalysesSnapshot(fbUser.uid, (analyses) => {
                 if (isRestoring) return;
+                if (analyses == null) {
+                    console.warn('Cloud analyses unavailable; keeping current analyses.');
+                    return;
+                }
                 setRawAnalyses(analyses);
             });
         } else if (isSignedIn === false) { 
@@ -620,19 +671,27 @@ const App: React.FC = () => {
 
         const nextClients = { ...workspace.clients };
         delete nextClients[clientId];
-        const nextCurrentClientId = workspace.currentClientId === clientId
-            ? (Object.keys(nextClients)[0] || '')
-            : workspace.currentClientId;
 
-        const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
-            currentClientId: nextCurrentClientId,
+        // Do not persist currentClientId changes (avoid cross-device navigation).
+        const nextWorkspacePersisted: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
             clients: nextClients,
         });
 
-        setWorkspace(nextWorkspace);
-        if (nextCurrentClientId && nextClients[nextCurrentClientId]) {
-            const clientUserData = nextClients[nextCurrentClientId].userData;
-            const sanitized = sanitizeAndValidateData(clientUserData) || createEmptyUserData(nextClients[nextCurrentClientId].name || '');
+        const nextLocalClientId = workspace.currentClientId === clientId
+            ? (Object.keys(nextClients)[0] || '')
+            : workspace.currentClientId;
+
+        const nextWorkspaceLocal: WorkspaceUserDataV2 = {
+            ...nextWorkspacePersisted,
+            currentClientId: nextLocalClientId,
+        };
+
+        setWorkspace(nextWorkspaceLocal);
+        setLocalPreferredClientId(nextLocalClientId);
+
+        if (nextLocalClientId && nextClients[nextLocalClientId]) {
+            const clientUserData = nextClients[nextLocalClientId].userData;
+            const sanitized = sanitizeAndValidateData(clientUserData) || createEmptyUserData(nextClients[nextLocalClientId].name || '');
             setAllUserData(sanitized);
         } else {
             setAllUserData(createEmptyUserData(''));
@@ -644,7 +703,7 @@ const App: React.FC = () => {
         ) as Record<string, AnalysisData>;
         setRawAnalyses(nextRaw);
 
-        await KVStore.setUserData(fbUser.uid, nextWorkspace);
+        await KVStore.setUserData(fbUser.uid, nextWorkspacePersisted);
         await KVStore.setAnalyses(fbUser.uid, nextRaw);
     }, [fbUser, isReadOnly, rawAnalyses, workspace]);
 
@@ -672,7 +731,6 @@ const App: React.FC = () => {
         });
 
         updateStateAndPersist({ dataSets: updatedDataSets, selectionState: newSelectionState });
-        setCurrentView('dashboard'); // Auto-switch to dashboard on new file
     }, [dataSets, selectionState, updateStateAndPersist]);
 
 
@@ -823,7 +881,6 @@ const App: React.FC = () => {
                     alert('還原成功，但備份檔案中沒有發現任何貼文資料。');
                 } else {
                     alert(`還原成功！已載入 ${restoredUserData.dataSets.length} 個資料集。`);
-                    setCurrentView('dashboard'); // Force switch to dashboard
                 }
             } else {
                 console.error("Sanitization failed. Returned null.");
@@ -987,7 +1044,8 @@ const App: React.FC = () => {
                     if (!workspace.clients?.[clientId]) return;
                     if (!confirmDiscardIfDirty('切換客戶')) return;
 
-                    const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, { currentClientId: clientId });
+                    // Keep selected client local-only to avoid cross-device navigation.
+                    const nextWorkspace: WorkspaceUserDataV2 = { ...workspace, currentClientId: clientId };
                     startClientSwitchTransition(() => {
                         setWorkspace(nextWorkspace);
                         const clientUserData = nextWorkspace.clients?.[clientId]?.userData;
@@ -997,11 +1055,11 @@ const App: React.FC = () => {
                         setAllUserData(sanitized);
                     });
 
+                    setLocalPreferredClientId(clientId);
+
                     setIsDataManagementDirty(false);
 
                     setIsMobileNavOpen(false);
-
-                    void KVStore.setUserData(fbUser.uid, nextWorkspace);
                 } : undefined}
                 onAddClient={workspace && !isReadOnly && fbUser ? async (params) => {
                     const trimmed = params.name.trim();
@@ -1022,21 +1080,27 @@ const App: React.FC = () => {
                         }
                     }
 
-                    const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
-                        currentClientId: newClientId,
+                    const nextWorkspacePersisted: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
                         clients: {
                             ...workspace.clients,
                             [newClientId]: { name: trimmed, userData: newClientUserData, color: clientColor, customColor: clientCustomColor },
                         },
                     });
 
+                    const nextWorkspaceLocal: WorkspaceUserDataV2 = {
+                        ...nextWorkspacePersisted,
+                        currentClientId: newClientId,
+                    };
+
                     startClientSwitchTransition(() => {
-                        setWorkspace(nextWorkspace);
+                        setWorkspace(nextWorkspaceLocal);
                         setAllUserData(newClientUserData);
                     });
 
+                    setLocalPreferredClientId(newClientId);
+
                     setIsDataManagementDirty(false);
-                    void KVStore.setUserData(fbUser.uid, nextWorkspace);
+                    void KVStore.setUserData(fbUser.uid, nextWorkspacePersisted);
                 } : undefined}
                 onRenameClient={workspace && !isReadOnly && fbUser ? renameWorkspaceClient : undefined}
                 onDeleteClient={workspace && !isReadOnly && fbUser ? async (clientId) => {

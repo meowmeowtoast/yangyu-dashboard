@@ -51,6 +51,32 @@ export const LocalDataManager: React.FC<{
     const [isLoadingBackups, setIsLoadingBackups] = useState(false);
     const [backupError, setBackupError] = useState<string | null>(null);
 
+    const parseBackupKeyToDate = (key: string): Date | null => {
+        const marker = ':backup:v1:';
+        const idx = key.indexOf(marker);
+        if (idx === -1) return null;
+        const iso = key.slice(idx + marker.length);
+        const d = new Date(iso);
+        return Number.isFinite(d.getTime()) ? d : null;
+    };
+
+    const formatTaipeiTime = (date: Date): string => {
+        try {
+            return new Intl.DateTimeFormat('zh-TW', {
+                timeZone: 'Asia/Taipei',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+            }).format(date);
+        } catch {
+            return date.toLocaleString('zh-TW');
+        }
+    };
+
     const loadCloudBackups = async () => {
         setIsLoadingBackups(true);
         setBackupError(null);
@@ -176,7 +202,24 @@ export const LocalDataManager: React.FC<{
                         <div className="mt-4 space-y-2">
                             {cloudBackups.map((key) => (
                                 <div key={key} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
-                                    <div className="text-xs text-zinc-600 dark:text-zinc-300 break-all">{key}</div>
+                                    <div className="min-w-0 flex-1">
+                                        {(() => {
+                                            const date = parseBackupKeyToDate(key);
+                                            if (!date) {
+                                                return (
+                                                    <div className="text-xs text-zinc-600 dark:text-zinc-300 break-all">{key}</div>
+                                                );
+                                            }
+                                            return (
+                                                <div className="space-y-1">
+                                                    <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                                                        台北時間：{formatTaipeiTime(date)}
+                                                    </div>
+                                                    <div className="text-xs text-zinc-500 dark:text-zinc-400 break-all">{key}</div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
                                     <button
                                         onClick={() => restoreCloudBackup(key)}
                                         className="px-3 py-2 text-white bg-rose-600 text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
