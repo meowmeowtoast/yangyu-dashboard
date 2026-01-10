@@ -5,7 +5,7 @@ import Dashboard from './components/Dashboard';
 import FileUpload from './components/FileUpload';
 import DataManagementPage, { LocalDataManager } from './components/DataManagementPage';
 import Footer from './components/Footer';
-import type { DataSet, NormalizedPost, SelectionState, AnalysisData, ReadOnlyViewState, SharedData, UserData, WorkspaceUserDataV2 } from './types';
+import type { DataSet, NormalizedPost, SelectionState, AnalysisData, ReadOnlyViewState, SharedData, UserData, WorkspaceUserDataV2, ClientThemeColor } from './types';
 import { useAuth } from './components/AuthContext';
 import * as KVStore from './utils/kvStore';
 import { generateShortLink, generateLongLink, getViewIdFromUrl, decompressViewData } from './utils/sharing';
@@ -13,6 +13,17 @@ import { exportDataAsJson, importDataFromFile } from './utils/backup';
 
 
 const WORKSPACE_ANALYSIS_DELIM = '::';
+
+const CLIENT_THEME_COLORS: ClientThemeColor[] = ['amber', 'orange', 'emerald', 'zinc'];
+
+const isClientThemeColor = (value: any): value is ClientThemeColor => {
+    return value === 'zinc' || value === 'amber' || value === 'orange' || value === 'emerald';
+};
+
+const pickDefaultClientThemeColor = (workspace: WorkspaceUserDataV2 | null): ClientThemeColor => {
+    const count = Object.keys(workspace?.clients || {}).length;
+    return CLIENT_THEME_COLORS[count % CLIENT_THEME_COLORS.length];
+};
 
 const createEmptyUserData = (companyName = ''): UserData => ({
     dataSets: [],
@@ -39,7 +50,8 @@ const normalizeWorkspaceUserDataV2 = (data: any): WorkspaceUserDataV2 | null => 
         const name = typeof raw.name === 'string' ? raw.name : '未命名客戶';
         const userData = raw.userData;
         if (!userData || typeof userData !== 'object') continue;
-        clients[id] = { name, userData };
+        const color = isClientThemeColor(raw.color) ? raw.color : undefined;
+        clients[id] = { name, userData, color };
     }
 
     const cleanedIds = Object.keys(clients);
@@ -65,6 +77,7 @@ const createWorkspaceFromLegacy = (userData: UserData): WorkspaceUserDataV2 => {
             [defaultClientId]: {
                 name: inferredName,
                 userData,
+                color: 'amber',
             },
         },
     };
@@ -232,6 +245,7 @@ const App: React.FC = () => {
             nextClients[id] = {
                 name: `復原客戶 ${id}`,
                 userData: createEmptyUserData(''),
+                color: pickDefaultClientThemeColor({ ...workspace, clients: nextClients }),
             };
         }
 
@@ -463,13 +477,14 @@ const App: React.FC = () => {
         KVStore.saveAnalysis(fbUser.uid, kvKey, data);
     }, [fbUser, isReadOnly, workspace]);
 
-    const renameWorkspaceClient = useCallback(async (clientId: string, name: string) => {
+    const renameWorkspaceClient = useCallback(async (clientId: string, params: { name: string; color?: ClientThemeColor }) => {
         if (isReadOnly || !fbUser || !workspace) return;
-        const trimmed = name.trim();
+        const trimmed = params.name.trim();
         if (!trimmed) return;
         if (!workspace.clients?.[clientId]) return;
 
         const currentClient = workspace.clients[clientId];
+        const nextColor = params.color || currentClient.color;
         const nextUserData: UserData = {
             ...(currentClient.userData || createEmptyUserData(trimmed)),
             companyProfile: {
@@ -486,6 +501,7 @@ const App: React.FC = () => {
                     ...currentClient,
                     name: trimmed,
                     userData: nextUserData,
+                    color: nextColor,
                 },
             },
         };
@@ -883,7 +899,7 @@ const App: React.FC = () => {
                 toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                 isMobileOpen={isMobileNavOpen}
                 onCloseMobile={() => setIsMobileNavOpen(false)}
-                workspaceClients={workspace ? Object.entries(workspace.clients).map(([id, c]) => ({ id, name: c.name })) : undefined}
+                workspaceClients={workspace ? Object.entries(workspace.clients).map(([id, c]) => ({ id, name: c.name, color: c.color })) : undefined}
                 currentClientId={workspace?.currentClientId}
                 currentClientName={workspace ? currentClientName : undefined}
                 isClientSwitching={isClientSwitching}
@@ -907,20 +923,21 @@ const App: React.FC = () => {
 
                     void KVStore.setUserData(fbUser.uid, nextWorkspace);
                 } : undefined}
-                onAddClient={workspace && !isReadOnly && fbUser ? async (name) => {
-                    const trimmed = name.trim();
+                onAddClient={workspace && !isReadOnly && fbUser ? async (params) => {
+                    const trimmed = params.name.trim();
                     if (!trimmed) return;
                     if (!confirmDiscardIfDirty('切換客戶')) return;
 
                     const newClientId = `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
                     const newClientUserData = createEmptyUserData(trimmed);
+                    const clientColor = (params.color || pickDefaultClientThemeColor(workspace));
 
                     const nextWorkspace: WorkspaceUserDataV2 = {
                         ...workspace,
                         currentClientId: newClientId,
                         clients: {
                             ...workspace.clients,
-                            [newClientId]: { name: trimmed, userData: newClientUserData },
+                            [newClientId]: { name: trimmed, userData: newClientUserData, color: clientColor },
                         },
                     };
 

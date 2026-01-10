@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import type { ClientThemeColor } from '../types';
 
 type View = 'dashboard' | 'dataManagement';
 
@@ -13,12 +14,12 @@ interface SidebarProps {
     isMobileOpen?: boolean;
     onCloseMobile?: () => void;
 
-    workspaceClients?: Array<{ id: string; name: string }>;
+    workspaceClients?: Array<{ id: string; name: string; color?: ClientThemeColor }>;
     currentClientId?: string;
     currentClientName?: string;
     onChangeClient?: (clientId: string) => void | Promise<void>;
-    onAddClient?: (name: string) => void | Promise<void>;
-    onRenameClient?: (clientId: string, name: string) => void | Promise<void>;
+    onAddClient?: (params: { name: string; color?: ClientThemeColor }) => void | Promise<void>;
+    onRenameClient?: (clientId: string, params: { name: string; color?: ClientThemeColor }) => void | Promise<void>;
     onDeleteClient?: (clientId: string) => void | Promise<void>;
     isClientSwitching?: boolean;
 }
@@ -42,8 +43,45 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
     const [isAddingClient, setIsAddingClient] = useState(false);
     const [newClientName, setNewClientName] = useState('');
+    const [newClientColor, setNewClientColor] = useState<ClientThemeColor>('amber');
     const [editingClientId, setEditingClientId] = useState<string | null>(null);
     const [editingClientName, setEditingClientName] = useState('');
+    const [editingClientColor, setEditingClientColor] = useState<ClientThemeColor>('amber');
+
+    const clientColorOptions = useMemo(() => {
+        return [
+            { value: 'amber' as const, label: '琥珀' },
+            { value: 'orange' as const, label: '赭橘' },
+            { value: 'emerald' as const, label: '橄欖綠' },
+            { value: 'zinc' as const, label: '岩灰' },
+        ];
+    }, []);
+
+    const getClientColorStyles = (color?: ClientThemeColor) => {
+        switch (color) {
+            case 'orange':
+                return {
+                    badge: 'bg-orange-200 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100',
+                    marker: 'before:bg-orange-500 dark:before:bg-orange-400',
+                };
+            case 'emerald':
+                return {
+                    badge: 'bg-emerald-200 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100',
+                    marker: 'before:bg-emerald-600 dark:before:bg-emerald-400',
+                };
+            case 'zinc':
+                return {
+                    badge: 'bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100',
+                    marker: 'before:bg-zinc-500 dark:before:bg-zinc-400',
+                };
+            case 'amber':
+            default:
+                return {
+                    badge: 'bg-amber-200 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
+                    marker: 'before:bg-amber-600 dark:before:bg-amber-400',
+                };
+        }
+    };
 
     const activeItemClass = 'text-zinc-900 bg-zinc-200/50 dark:bg-zinc-800 dark:text-zinc-100';
 
@@ -85,16 +123,23 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center h-14 px-4 border-b border-zinc-200/50 dark:border-zinc-800/50">
                 <div className="flex items-center w-full min-w-0">
                     <div className={`min-w-0 ${isCollapsed ? 'w-full flex justify-center md:justify-center' : ''}`}>
-                        <span className="text-lg font-bold text-emerald-600 tracking-wider">
+                        {/* Mobile: always show full title */}
+                        <div className="md:hidden min-w-0">
+                            <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none truncate">YANGYU</div>
+                            <div className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 leading-none mt-0.5 truncate">社群儀表板</div>
+                        </div>
+
+                        {/* Desktop: collapse shows only Y */}
+                        <div className="hidden md:block min-w-0">
                             {isCollapsed ? (
-                                <>
-                                    <span className="md:hidden">YANGYU</span>
-                                    <span className="hidden md:inline">Y</span>
-                                </>
+                                <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none text-center">Y</div>
                             ) : (
-                                'YANGYU'
+                                <>
+                                    <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none truncate">YANGYU</div>
+                                    <div className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 leading-none mt-0.5 truncate">社群儀表板</div>
+                                </>
                             )}
-                        </span>
+                        </div>
                     </div>
                     <button
                         type="button"
@@ -144,9 +189,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     )}
                                 </div>
                             ) : (
-                                <div className="w-full flex justify-center">
-                                    <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400" title="客戶">客</span>
-                                </div>
+                                <div className="w-full" />
                             )}
 
                             {!isCollapsed && !isReadOnly && !isAddingClient && onAddClient && (
@@ -171,7 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         setIsAddingClient(false);
                                         setNewClientName('');
                                         try {
-                                            await onAddClient(trimmed);
+                                            await onAddClient({ name: trimmed, color: newClientColor });
                                         } catch {
                                             // ignore
                                         }
@@ -183,6 +226,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         placeholder="輸入客戶名稱"
                                         className="w-full px-3 py-2 rounded-lg text-sm bg-white border border-zinc-200 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
                                     />
+                                    <select
+                                        value={newClientColor}
+                                        onChange={(e) => setNewClientColor(e.target.value as ClientThemeColor)}
+                                        className="w-full px-3 py-2 rounded-lg text-sm bg-white border border-zinc-200 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
+                                        aria-label="客戶主題色"
+                                    >
+                                        {clientColorOptions.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
                                     <div className="flex gap-2">
                                         <button
                                             type="submit"
@@ -211,6 +264,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     const isActive = c.id === currentClientId;
                                     const disabled = isReadOnly || !onChangeClient || isClientSwitching;
                                     const isEditing = editingClientId === c.id;
+                                    const colorStyles = getClientColorStyles(c.color);
                                     const baseClass = 'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium';
                                     const activeClass = 'text-zinc-900 bg-zinc-200/50 dark:bg-zinc-800 dark:text-zinc-100';
                                     const hoverClass = 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200';
@@ -225,11 +279,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                     onCloseMobile?.();
                                                 }}
                                                 disabled={disabled}
-                                                className={`${baseClass} pr-2 text-left ${disabled ? 'cursor-not-allowed' : ''} ${isActive ? activeClass : hoverClass}`}
+                                                className={`${baseClass} pr-2 text-left ${disabled ? 'cursor-not-allowed' : ''} ${isActive ? activeClass : hoverClass} ${!isCollapsed ? `relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-1 before:rounded-full ${colorStyles.marker}` : ''}`}
                                                 title={isCollapsed ? c.name : undefined}
                                             >
                                                 {isCollapsed ? (
-                                                    <span className="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-bold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                                                    <span className={`flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-bold ${colorStyles.badge}`}>
                                                         {c.name?.trim()?.slice(0, 1) || 'C'}
                                                     </span>
                                                 ) : null}
@@ -248,7 +302,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                             setEditingClientId(null);
                                                             setEditingClientName('');
                                                             try {
-                                                                await onRenameClient?.(c.id, trimmed);
+                                                                await onRenameClient?.(c.id, { name: trimmed, color: editingClientColor });
                                                             } catch {
                                                                 // ignore
                                                             }
@@ -260,6 +314,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                             className="w-full px-2 py-1 rounded-md text-sm bg-white border border-zinc-200 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
                                                             autoFocus
                                                         />
+                                                        <select
+                                                            value={editingClientColor}
+                                                            onChange={(e) => setEditingClientColor(e.target.value as ClientThemeColor)}
+                                                            className="px-2 py-1 rounded-md text-sm bg-white border border-zinc-200 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400/30 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100"
+                                                            aria-label="客戶主題色"
+                                                        >
+                                                            {clientColorOptions.map((opt) => (
+                                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                            ))}
+                                                        </select>
                                                         <button
                                                             type="submit"
                                                             className="px-2 py-1 rounded-md text-xs font-medium bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
@@ -288,6 +352,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                                 e.stopPropagation();
                                                                 setEditingClientId(c.id);
                                                                 setEditingClientName(c.name);
+                                                                setEditingClientColor(c.color || 'amber');
                                                             }}
                                                             className="px-2 py-1 rounded-md text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800"
                                                             disabled={Boolean(isClientSwitching) || !onRenameClient}

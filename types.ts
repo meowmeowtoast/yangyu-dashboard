@@ -73,6 +73,7 @@ export interface UserData {
 export interface WorkspaceClient {
   name: string;
   userData: UserData;
+  color?: ClientThemeColor;
 }
 
 // KV state.userData supports both the legacy single-client shape (UserData)
@@ -105,3 +106,6 @@ export interface SharedData {
 }
 
 export type ThemeColor = 'zinc' | 'emerald' | 'rose' | 'amber' | 'indigo' | 'orange';
+
+// Client theme colors: keep defaults in earth-tone palette.
+export type ClientThemeColor = Extract<ThemeColor, 'zinc' | 'amber' | 'orange' | 'emerald'>;
