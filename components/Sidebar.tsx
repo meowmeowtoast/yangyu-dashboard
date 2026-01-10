@@ -139,9 +139,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         const customHex = isHexColor(customColor) ? customColor!.trim() : '#777777';
 
         return (
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0 max-w-full">
             <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-4 gap-2 max-w-full">
                 {clientColorOptions.map((opt) => {
                     const selected = opt.value === value;
                     return (
@@ -191,8 +191,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 className="w-6 h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 ring-1 ring-zinc-400/60 dark:ring-zinc-500/60 shadow-inner"
                                 style={{ backgroundColor: customHex }}
                             />
+
+                            {/* Plus marker for discoverability */}
+                            <span
+                                className="absolute -bottom-0.5 -right-0.5 z-20 h-4 w-4 rounded-full bg-white border border-zinc-200 text-zinc-600 text-[11px] leading-[14px] text-center shadow-sm dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
+                                aria-hidden
+                            >
+                                +
+                            </span>
+
                             {selected && (
-                                <span className="absolute inset-0 flex items-center justify-center">
+                                <span className="absolute inset-0 z-10 flex items-center justify-center">
                                     <svg className="w-4 h-4 text-white drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M20 6L9 17l-5-5" />
                                     </svg>
@@ -256,15 +265,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             }`}
             title={isCollapsed ? label : undefined}
         >
-
-                            {/* Plus marker for discoverability */}
-                            <span
-                                className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-white border border-zinc-200 text-zinc-600 text-[11px] leading-[14px] text-center shadow-sm dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
-                                aria-hidden
-                            >
-                                +
-                            </span>
-
             <span className="flex-shrink-0">{icon}</span>
             {!isCollapsed && <span className="truncate">{label}</span>}
         </button>
