@@ -50,21 +50,21 @@ const AllPostsTable: React.FC<{ data: NormalizedPost[]; onPostSelect: (post: Nor
                     <thead className="text-xs text-slate-700 uppercase bg-slate-50 dark:bg-slate-700 dark:text-slate-300 sticky top-0">
                         <tr>
                             <th scope="col" className="px-2 py-3 w-12">平台</th>
-                            <th scope="col" className="px-2 py-3 w-32">發佈時間</th>
+                            <th scope="col" className="px-2 py-3 w-32 hidden md:table-cell">發佈時間</th>
                             <th scope="col" className="px-2 py-3">內容</th>
-                            <th scope="col" className="px-2 py-3 w-12 text-center">連結</th>
+                            <th scope="col" className="px-2 py-3 w-12 text-center hidden md:table-cell">連結</th>
                             <th scope="col" className="px-2 py-3 text-right whitespace-nowrap">曝光</th>
                             <th scope="col" className="px-2 py-3 text-right whitespace-nowrap">觸及</th>
-                            <th scope="col" className="px-2 py-3 text-right whitespace-nowrap">心情</th>
-                            <th scope="col" className="px-2 py-3 text-right whitespace-nowrap">留言</th>
-                            <th scope="col" className="px-2 py-3 text-right whitespace-nowrap">分享</th>
+                            <th scope="col" className="px-2 py-3 text-right whitespace-nowrap hidden lg:table-cell">心情</th>
+                            <th scope="col" className="px-2 py-3 text-right whitespace-nowrap hidden lg:table-cell">留言</th>
+                            <th scope="col" className="px-2 py-3 text-right whitespace-nowrap hidden lg:table-cell">分享</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredPosts.length > 0 ? filteredPosts.map((post) => (
                             <tr key={post.permalink} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                 <td className="px-2 py-2 align-top"><PlatformIcon platform={post.platform} /></td>
-                                <td className="px-2 py-2 align-top whitespace-nowrap">{format(post.publishTime, 'yyyy/MM/dd HH:mm')}</td>
+                                <td className="px-2 py-2 align-top whitespace-nowrap hidden md:table-cell">{format(post.publishTime, 'yyyy/MM/dd HH:mm')}</td>
                                 <td 
                                     className="px-2 py-2 text-slate-800 dark:text-slate-200 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-500 max-w-[15ch] sm:max-w-sm lg:max-w-lg xl:max-w-xl truncate" 
                                     title="點擊查看完整內容"
@@ -72,7 +72,7 @@ const AllPostsTable: React.FC<{ data: NormalizedPost[]; onPostSelect: (post: Nor
                                 >
                                     {post.content}
                                 </td>
-                                <td className="px-2 py-2 text-center align-top">
+                                <td className="px-2 py-2 text-center align-top hidden md:table-cell">
                                     <a href={post.permalink} target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-700">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto" viewBox="0 0 20 20" fill="currentColor">
                                             <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
@@ -82,9 +82,9 @@ const AllPostsTable: React.FC<{ data: NormalizedPost[]; onPostSelect: (post: Nor
                                 </td>
                                 <td className="px-2 py-2 text-right align-top whitespace-nowrap">{post.impressions.toLocaleString()}</td>
                                 <td className="px-2 py-2 text-right align-top whitespace-nowrap">{post.reach.toLocaleString()}</td>
-                                <td className="px-2 py-2 text-right align-top whitespace-nowrap">{post.likes.toLocaleString()}</td>
-                                <td className="px-2 py-2 text-right align-top whitespace-nowrap">{post.comments.toLocaleString()}</td>
-                                <td className="px-2 py-2 text-right align-top whitespace-nowrap">{post.shares.toLocaleString()}</td>
+                                <td className="px-2 py-2 text-right align-top whitespace-nowrap hidden lg:table-cell">{post.likes.toLocaleString()}</td>
+                                <td className="px-2 py-2 text-right align-top whitespace-nowrap hidden lg:table-cell">{post.comments.toLocaleString()}</td>
+                                <td className="px-2 py-2 text-right align-top whitespace-nowrap hidden lg:table-cell">{post.shares.toLocaleString()}</td>
                             </tr>
                         )) : (
                             <tr>

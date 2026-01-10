@@ -92,8 +92,8 @@ const FollowerGrowth: React.FC<Props> = ({ posts, allMonthlyData, baseData }) =>
         <tr className={isTotal ? "bg-gray-50 dark:bg-slate-700/50 font-bold" : "bg-white dark:bg-slate-800 border-b dark:border-slate-700"}>
             <th scope="row" className={`px-2 py-3 font-medium ${isTotal ? 'text-gray-900 dark:text-slate-100' : 'text-gray-700 dark:text-slate-300'}`}>{platform}</th>
             <td className="px-2 py-3 text-gray-800 dark:text-slate-200">{data.start.toLocaleString()}</td>
-            <td className="px-2 py-3 text-green-600">{`+${data.gained.toLocaleString()}`}</td>
-            <td className="px-2 py-3 text-red-600">{`-${data.lost.toLocaleString()}`}</td>
+            <td className="px-2 py-3 text-green-600 hidden md:table-cell">{`+${data.gained.toLocaleString()}`}</td>
+            <td className="px-2 py-3 text-red-600 hidden md:table-cell">{`-${data.lost.toLocaleString()}`}</td>
             <td className={`px-2 py-3 font-semibold ${data.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {data.net >= 0 ? '+' : ''}{data.net.toLocaleString()}
             </td>
@@ -111,8 +111,8 @@ const FollowerGrowth: React.FC<Props> = ({ posts, allMonthlyData, baseData }) =>
                     <tr>
                         <th scope="col" className="px-2 py-3">平台</th>
                         <th scope="col" className="px-2 py-3">期初粉絲數</th>
-                        <th scope="col" className="px-2 py-3">新增追蹤</th>
-                        <th scope="col" className="px-2 py-3">取消追蹤</th>
+                        <th scope="col" className="px-2 py-3 hidden md:table-cell">新增追蹤</th>
+                        <th scope="col" className="px-2 py-3 hidden md:table-cell">取消追蹤</th>
                         <th scope="col" className="px-2 py-3">本期淨增長</th>
                         <th scope="col" className="px-2 py-3">期末粉絲數</th>
                         <th scope="col" className="px-2 py-3 text-right">增長率</th>
