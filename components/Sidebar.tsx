@@ -82,13 +82,17 @@ const Sidebar: React.FC<SidebarProps> = ({
             } md:translate-x-0`}
         >
             {/* Header / Brand */}
-            <div className={`flex items-center h-14 px-4 border-b border-zinc-200/50 dark:border-zinc-800/50 ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
-                <div className={`flex items-center gap-3 overflow-hidden transition-all ${isCollapsed ? 'w-8' : 'w-full'}`}>
-                    <div className="flex-1" />
+            <div className="flex items-center h-14 px-4 border-b border-zinc-200/50 dark:border-zinc-800/50">
+                <div className="flex items-center w-full min-w-0">
+                    <div className={`min-w-0 ${isCollapsed ? 'w-full flex justify-center' : ''}`}>
+                        <span className="text-lg font-bold text-emerald-600 tracking-wider">
+                            {isCollapsed ? 'Y' : 'YANGYU'}
+                        </span>
+                    </div>
                     <button
                         type="button"
                         onClick={() => onCloseMobile?.()}
-                        className="md:hidden p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                        className="ml-auto md:hidden p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                         aria-label="關閉選單"
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -157,9 +161,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                                         e.preventDefault();
                                         const trimmed = newClientName.trim();
                                         if (!trimmed) return;
-                                        await onAddClient(trimmed);
-                                        setNewClientName('');
                                         setIsAddingClient(false);
+                                        setNewClientName('');
+                                        try {
+                                            await onAddClient(trimmed);
+                                        } catch {
+                                            // ignore
+                                        }
                                     }}
                                 >
                                     <input
@@ -210,12 +218,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                     onCloseMobile?.();
                                                 }}
                                                 disabled={disabled}
-                                                className={`${baseClass} pr-2 ${disabled ? 'cursor-not-allowed' : ''} ${isActive ? activeClass : hoverClass}`}
+                                                className={`${baseClass} pr-2 text-left ${disabled ? 'cursor-not-allowed' : ''} ${isActive ? activeClass : hoverClass}`}
                                                 title={isCollapsed ? c.name : undefined}
                                             >
-                                                <span className="flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                                                    {c.name?.trim()?.slice(0, 1) || 'C'}
-                                                </span>
+                                                {isCollapsed ? (
+                                                    <span className="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-bold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                                                        {c.name?.trim()?.slice(0, 1) || 'C'}
+                                                    </span>
+                                                ) : null}
 
                                                 {!isCollapsed && !isEditing && (
                                                     <span className="truncate flex-1">{c.name}</span>
@@ -228,9 +238,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                             e.preventDefault();
                                                             const trimmed = editingClientName.trim();
                                                             if (!trimmed) return;
-                                                            await onRenameClient?.(c.id, trimmed);
                                                             setEditingClientId(null);
                                                             setEditingClientName('');
+                                                            try {
+                                                                await onRenameClient?.(c.id, trimmed);
+                                                            } catch {
+                                                                // ignore
+                                                            }
                                                         }}
                                                     >
                                                         <input

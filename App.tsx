@@ -496,7 +496,7 @@ const App: React.FC = () => {
             setAllUserData(sanitized);
         }
 
-        await KVStore.setUserData(fbUser.uid, nextWorkspace);
+        void KVStore.setUserData(fbUser.uid, nextWorkspace);
     }, [fbUser, isReadOnly, workspace]);
 
     const deleteWorkspaceClient = useCallback(async (clientId: string) => {
