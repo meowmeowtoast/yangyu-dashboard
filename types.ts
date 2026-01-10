@@ -80,6 +80,8 @@ export interface WorkspaceClient {
 // and the multi-client workspace shape below.
 export interface WorkspaceUserDataV2 {
   version: 2;
+  /** Monotonic revision used to ignore stale remote polls. */
+  rev?: number;
   currentClientId: string;
   clients: Record<string, WorkspaceClient>;
 }

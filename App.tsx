@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useMemo, useTransition } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, useTransition } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import FileUpload from './components/FileUpload';
@@ -23,6 +23,16 @@ const isClientThemeColor = (value: any): value is ClientThemeColor => {
 const pickDefaultClientThemeColor = (workspace: WorkspaceUserDataV2 | null): ClientThemeColor => {
     const count = Object.keys(workspace?.clients || {}).length;
     return CLIENT_THEME_COLORS[count % CLIENT_THEME_COLORS.length];
+};
+
+const bumpWorkspaceRev = (workspace: WorkspaceUserDataV2, patch: Omit<Partial<WorkspaceUserDataV2>, 'version'>): WorkspaceUserDataV2 => {
+    const nextRev = (workspace.rev ?? 0) + 1;
+    return {
+        ...workspace,
+        ...patch,
+        version: 2,
+        rev: nextRev,
+    };
 };
 
 const createEmptyUserData = (companyName = ''): UserData => ({
@@ -60,8 +70,11 @@ const normalizeWorkspaceUserDataV2 = (data: any): WorkspaceUserDataV2 | null => 
     const requestedId = typeof data.currentClientId === 'string' ? data.currentClientId : '';
     const currentClientId = clients[requestedId] ? requestedId : cleanedIds[0];
 
+    const rev = typeof (data as any)?.rev === 'number' && Number.isFinite((data as any).rev) ? (data as any).rev : 0;
+
     return {
         version: 2,
+        rev,
         currentClientId,
         clients,
     };
@@ -72,6 +85,7 @@ const createWorkspaceFromLegacy = (userData: UserData): WorkspaceUserDataV2 => {
     const inferredName = userData.companyProfile?.companyName?.trim() || '客戶 1';
     return {
         version: 2,
+        rev: 1,
         currentClientId: defaultClientId,
         clients: {
             [defaultClientId]: {
@@ -172,6 +186,11 @@ const App: React.FC = () => {
     const [isClientSwitching, startClientSwitchTransition] = useTransition();
 
     const [workspace, setWorkspace] = useState<WorkspaceUserDataV2 | null>(null);
+    const workspaceRef = useRef<WorkspaceUserDataV2 | null>(null);
+
+    useEffect(() => {
+        workspaceRef.current = workspace;
+    }, [workspace]);
     
     // Main application state
     const [allUserData, setAllUserData] = useState<UserData>({
@@ -249,11 +268,10 @@ const App: React.FC = () => {
             };
         }
 
-        const nextWorkspace: WorkspaceUserDataV2 = {
-            ...workspace,
+        const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
             clients: nextClients,
             currentClientId: nextClients[workspace.currentClientId] ? workspace.currentClientId : Object.keys(nextClients)[0],
-        };
+        });
         setWorkspace(nextWorkspace);
         void KVStore.setUserData(fbUser.uid, nextWorkspace);
     }, [fbUser, isReadOnly, rawAnalyses, workspace]);
@@ -298,18 +316,15 @@ const App: React.FC = () => {
             if (workspace) {
                 const clientId = workspace.currentClientId;
                 const currentClient = workspace.clients[clientId];
-                const nextClientName = nextActiveUserData.companyProfile?.companyName?.trim() || currentClient.name;
-                const nextWorkspace: WorkspaceUserDataV2 = {
-                    ...workspace,
+                const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
                     clients: {
                         ...workspace.clients,
                         [clientId]: {
                             ...currentClient,
-                            name: nextClientName,
                             userData: nextActiveUserData,
                         },
                     },
-                };
+                });
                 setWorkspace(nextWorkspace);
                 await KVStore.setUserData(fbUser.uid, nextWorkspace);
             } else {
@@ -423,6 +438,13 @@ const App: React.FC = () => {
 
                 const normalizedWorkspace = normalizeWorkspaceUserDataV2(data);
                 if (normalizedWorkspace) {
+                    const currentRev = workspaceRef.current?.rev ?? 0;
+                    const incomingRev = normalizedWorkspace.rev ?? 0;
+                    if (incomingRev < currentRev) {
+                        setIsLoading(false);
+                        return;
+                    }
+
                     const clientId = normalizedWorkspace.currentClientId;
                     setWorkspace(normalizedWorkspace);
 
@@ -493,8 +515,7 @@ const App: React.FC = () => {
             },
         };
 
-        const nextWorkspace: WorkspaceUserDataV2 = {
-            ...workspace,
+        const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
             clients: {
                 ...workspace.clients,
                 [clientId]: {
@@ -504,7 +525,7 @@ const App: React.FC = () => {
                     color: nextColor,
                 },
             },
-        };
+        });
 
         setWorkspace(nextWorkspace);
         if (workspace.currentClientId === clientId) {
@@ -542,11 +563,10 @@ const App: React.FC = () => {
             ? (Object.keys(nextClients)[0] || '')
             : workspace.currentClientId;
 
-        const nextWorkspace: WorkspaceUserDataV2 = {
-            ...workspace,
+        const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
             currentClientId: nextCurrentClientId,
             clients: nextClients,
-        };
+        });
 
         setWorkspace(nextWorkspace);
         if (nextCurrentClientId && nextClients[nextCurrentClientId]) {
@@ -626,8 +646,7 @@ const App: React.FC = () => {
                 const clientId = workspace.currentClientId;
                 const currentClient = workspace.clients[clientId];
 
-                const nextWorkspace: WorkspaceUserDataV2 = {
-                    ...workspace,
+                const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
                     clients: {
                         ...workspace.clients,
                         [clientId]: {
@@ -635,7 +654,7 @@ const App: React.FC = () => {
                             userData: emptyData,
                         },
                     },
-                };
+                });
                 setWorkspace(nextWorkspace);
                 await KVStore.setUserData(fbUser.uid, nextWorkspace);
 
@@ -907,7 +926,7 @@ const App: React.FC = () => {
                     if (!workspace.clients?.[clientId]) return;
                     if (!confirmDiscardIfDirty('切換客戶')) return;
 
-                    const nextWorkspace: WorkspaceUserDataV2 = { ...workspace, currentClientId: clientId };
+                    const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, { currentClientId: clientId });
                     startClientSwitchTransition(() => {
                         setWorkspace(nextWorkspace);
                         const clientUserData = nextWorkspace.clients?.[clientId]?.userData;
@@ -932,14 +951,13 @@ const App: React.FC = () => {
                     const newClientUserData = createEmptyUserData(trimmed);
                     const clientColor = (params.color || pickDefaultClientThemeColor(workspace));
 
-                    const nextWorkspace: WorkspaceUserDataV2 = {
-                        ...workspace,
+                    const nextWorkspace: WorkspaceUserDataV2 = bumpWorkspaceRev(workspace, {
                         currentClientId: newClientId,
                         clients: {
                             ...workspace.clients,
                             [newClientId]: { name: trimmed, userData: newClientUserData, color: clientColor },
                         },
-                    };
+                    });
 
                     startClientSwitchTransition(() => {
                         setWorkspace(nextWorkspace);
