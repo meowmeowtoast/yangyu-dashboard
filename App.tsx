@@ -862,7 +862,7 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="min-h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex font-inter overflow-x-hidden">
+        <div className="min-h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex font-inter">
             {isMobileNavOpen && (
                 <div
                     className="fixed inset-0 bg-black/30 z-40 md:hidden"

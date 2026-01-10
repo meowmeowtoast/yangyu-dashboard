@@ -590,7 +590,26 @@ const Dashboard: React.FC<DashboardProps> = ({
             {heatmapTooltip && (
                 <div 
                     className="fixed z-50 p-3 bg-zinc-800 text-zinc-100 rounded-lg shadow-xl pointer-events-none transition-opacity duration-200 text-sm border border-zinc-700"
-                    style={{ top: heatmapTooltip.y + 15, left: heatmapTooltip.x + 15 }}
+                    style={(() => {
+                        const offset = 15;
+                        const vw = typeof window !== 'undefined' ? window.innerWidth : 0;
+                        const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
+                        const maxW = 320;
+                        const maxH = 220;
+
+                        const preferRight = vw ? (heatmapTooltip.x + offset + maxW <= vw - 12) : true;
+                        const preferDown = vh ? (heatmapTooltip.y + offset + maxH <= vh - 12) : true;
+
+                        const left = preferRight ? (heatmapTooltip.x + offset) : (heatmapTooltip.x - offset);
+                        const top = preferDown ? (heatmapTooltip.y + offset) : (heatmapTooltip.y - offset);
+
+                        return {
+                            top,
+                            left,
+                            maxWidth: 'min(320px, calc(100vw - 24px))',
+                            transform: `${preferRight ? '' : 'translateX(-100%)'}${preferDown ? '' : ' translateY(-100%)'}`.trim(),
+                        } as React.CSSProperties;
+                    })()}
                 >
                     {heatmapTooltip.content}
                 </div>
