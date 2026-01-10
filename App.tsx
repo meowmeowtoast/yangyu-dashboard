@@ -1048,7 +1048,9 @@ const App: React.FC = () => {
                     )}
                 </div>
 
-                <Footer />
+                <div className="-mx-4 sm:-mx-6 mt-8">
+                    <Footer />
+                </div>
             </main>
         </div>
     );

@@ -84,9 +84,16 @@ const Sidebar: React.FC<SidebarProps> = ({
             {/* Header / Brand */}
             <div className="flex items-center h-14 px-4 border-b border-zinc-200/50 dark:border-zinc-800/50">
                 <div className="flex items-center w-full min-w-0">
-                    <div className={`min-w-0 ${isCollapsed ? 'w-full flex justify-center' : ''}`}>
+                    <div className={`min-w-0 ${isCollapsed ? 'w-full flex justify-center md:justify-center' : ''}`}>
                         <span className="text-lg font-bold text-emerald-600 tracking-wider">
-                            {isCollapsed ? 'Y' : 'YANGYU'}
+                            {isCollapsed ? (
+                                <>
+                                    <span className="md:hidden">YANGYU</span>
+                                    <span className="hidden md:inline">Y</span>
+                                </>
+                            ) : (
+                                'YANGYU'
+                            )}
                         </span>
                     </div>
                     <button
@@ -313,8 +320,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 )}
             </div>
 
-            {/* Footer */}
-            <div className="h-14 px-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center">
+            {/* Footer (Desktop only: collapse control) */}
+            <div className="hidden md:flex h-14 px-3 border-t border-zinc-200 dark:border-zinc-800 items-center">
                 <button
                     type="button"
                     onClick={toggleCollapse}
