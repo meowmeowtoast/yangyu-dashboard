@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ClientThemeColor } from '../types';
 
 type View = 'dashboard' | 'dataManagement';
@@ -58,12 +59,39 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [editingClientCustomColor, setEditingClientCustomColor] = useState<string>('#777777');
 
     const [openClientMenuId, setOpenClientMenuId] = useState<string | null>(null);
+    const [clientMenuAnchor, setClientMenuAnchor] = useState<{
+        top: number;
+        left: number;
+        openUp: boolean;
+    } | null>(null);
 
     useEffect(() => {
         if (!openClientMenuId) return;
         const onWindowClick = () => setOpenClientMenuId(null);
         window.addEventListener('click', onWindowClick);
         return () => window.removeEventListener('click', onWindowClick);
+    }, [openClientMenuId]);
+
+    useEffect(() => {
+        if (!openClientMenuId) return;
+
+        const close = () => {
+            setOpenClientMenuId(null);
+            setClientMenuAnchor(null);
+        };
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') close();
+        };
+
+        window.addEventListener('resize', close);
+        window.addEventListener('scroll', close, true);
+        window.addEventListener('keydown', onKeyDown);
+        return () => {
+            window.removeEventListener('resize', close);
+            window.removeEventListener('scroll', close, true);
+            window.removeEventListener('keydown', onKeyDown);
+        };
     }, [openClientMenuId]);
 
     const clientColorOptions = useMemo(() => {
@@ -474,13 +502,30 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                 )}
 
                                                 {!isCollapsed && !isEditing && !isReadOnly && (
-                                                    <div className="relative flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button
                                                             type="button"
                                                             onClick={(e) => {
                                                                 e.preventDefault();
                                                                 e.stopPropagation();
-                                                                setOpenClientMenuId((prev) => (prev === c.id ? null : c.id));
+                                                                const nextId = openClientMenuId === c.id ? null : c.id;
+                                                                if (!nextId) {
+                                                                    setOpenClientMenuId(null);
+                                                                    setClientMenuAnchor(null);
+                                                                    return;
+                                                                }
+
+                                                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                                const estimatedMenuHeight = 96;
+                                                                const openUp = rect.bottom + estimatedMenuHeight > window.innerHeight - 8;
+                                                                const top = openUp ? rect.top - 6 : rect.bottom + 6;
+
+                                                                setOpenClientMenuId(nextId);
+                                                                setClientMenuAnchor({
+                                                                    top,
+                                                                    left: rect.right,
+                                                                    openUp,
+                                                                });
                                                             }}
                                                             className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800"
                                                             disabled={Boolean(isClientSwitching)}
@@ -493,42 +538,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                                 <circle cx="12" cy="19" r="1" />
                                                             </svg>
                                                         </button>
-
-                                                        {openClientMenuId === c.id && (
-                                                            <div
-                                                                className="absolute right-0 top-full mt-1 w-28 rounded-lg border border-zinc-200 bg-white shadow-lg z-50 dark:border-zinc-800 dark:bg-zinc-900"
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                }}
-                                                            >
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setOpenClientMenuId(null);
-                                                                        setEditingClientId(c.id);
-                                                                        setEditingClientName(c.name);
-                                                                        setEditingClientColor(c.color || 'stone');
-                                                                        setEditingClientCustomColor(isHexColor(c.customColor) ? c.customColor!.trim() : '#777777');
-                                                                    }}
-                                                                    className="w-full px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                                                                    disabled={!onRenameClient}
-                                                                >
-                                                                    編輯
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setOpenClientMenuId(null);
-                                                                        onDeleteClient?.(c.id);
-                                                                    }}
-                                                                    className="w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-                                                                    disabled={!onDeleteClient}
-                                                                >
-                                                                    刪除
-                                                                </button>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 )}
                                             </button>
@@ -540,6 +549,65 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Client actions menu (portal to avoid overflow clipping / scrollbars) */}
+            {openClientMenuId && clientMenuAnchor && workspaceClients &&
+                createPortal(
+                    (() => {
+                        const c = workspaceClients.find((x) => x.id === openClientMenuId);
+                        if (!c) return null;
+
+                        const translateClass = clientMenuAnchor.openUp
+                            ? '-translate-x-full -translate-y-full'
+                            : '-translate-x-full';
+
+                        return (
+                            <div
+                                className={`fixed z-[9999] ${translateClass}`}
+                                style={{ top: clientMenuAnchor.top, left: clientMenuAnchor.left }}
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                            >
+                                <div className="w-28 rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setOpenClientMenuId(null);
+                                            setClientMenuAnchor(null);
+                                            setEditingClientId(c.id);
+                                            setEditingClientName(c.name);
+                                            setEditingClientColor(c.color || 'stone');
+                                            setEditingClientCustomColor(isHexColor(c.customColor) ? c.customColor!.trim() : '#777777');
+                                        }}
+                                        className="w-full px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                        disabled={!onRenameClient}
+                                    >
+                                        編輯
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setOpenClientMenuId(null);
+                                            setClientMenuAnchor(null);
+                                            onDeleteClient?.(c.id);
+                                        }}
+                                        className="w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                                        disabled={!onDeleteClient}
+                                    >
+                                        刪除
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })(),
+                    document.body
+                )}
 
             {/* Footer (Desktop only: collapse control) */}
             <div className="hidden md:flex h-14 px-3 border-t border-zinc-200 dark:border-zinc-800 items-center">
