@@ -947,13 +947,15 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                         </label>
                     </div>
                 </div>
+            </div>
 
+            <div className="lg:col-span-2">
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">已上傳資料集</h2>
                         <button onClick={() => setIsAddModalOpen(true)} className="px-3 py-1.5 bg-zinc-100 text-zinc-700 text-xs font-medium rounded-lg hover:bg-zinc-200">新增檔案</button>
                     </div>
-                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                    <div className="space-y-3">
                         {sortedDataSets.map((dataSet) => {
                             const isExpanded = expandedDataSetId === dataSet.id;
                             const enabledPostsCount = dataSet.posts.filter(p => !!selectionState.enabledPostPermalinks[p.permalink]).length;
@@ -979,35 +981,79 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                             };
 
                             const sortedPosts = [...(dataSet.posts || [])].sort((a, b) => getPostTime(a) - getPostTime(b));
-                            
-                            const { dateRange, platforms } = (() => {
-                                if (!sortedPosts || sortedPosts.length === 0) return { dateRange: 'N/A', platforms: [] as ('Facebook' | 'Instagram')[] };
+
+                            const { dateRange, platforms, postTypeChips } = (() => {
+                                if (!sortedPosts || sortedPosts.length === 0) {
+                                    return {
+                                        dateRange: 'N/A',
+                                        platforms: [] as ('Facebook' | 'Instagram')[],
+                                        postTypeChips: [] as Array<{ type: string; count: number }>,
+                                    };
+                                }
                                 const minDate = new Date(getPostTime(sortedPosts[0]));
                                 const maxDate = new Date(getPostTime(sortedPosts[sortedPosts.length - 1]));
                                 const platformSet = new Set(sortedPosts.map(p => p.platform));
+                                const postTypeCounts = sortedPosts.reduce((acc: Record<string, number>, p) => {
+                                    const k = String(p.postType || '未知').trim() || '未知';
+                                    acc[k] = (acc[k] || 0) + 1;
+                                    return acc;
+                                }, {} as Record<string, number>);
+                                const chips = Object.entries(postTypeCounts)
+                                    .map(([type, count]) => ({ type, count }))
+                                    .sort((a, b) => b.count - a.count)
+                                    .slice(0, 4);
                                 return {
                                     dateRange: `${formatZhDate(minDate)}－${formatZhDate(maxDate)}`,
                                     platforms: Array.from(platformSet) as ('Facebook' | 'Instagram')[],
+                                    postTypeChips: chips,
                                 };
                             })();
 
+                            const platformLabel = platforms.length
+                                ? platforms.map(p => (p === 'Instagram' ? 'Instagram' : 'Facebook')).join('／')
+                                : '—';
+
                             return (
                                 <div key={dataSet.id} className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-200 bg-zinc-50/50 hover:bg-zinc-50 hover:shadow-sm">
-                                    <div className="flex items-center gap-3 p-3">
-                                        <DataSetCheckbox dataSet={dataSet} />
+                                    <div className="flex items-start gap-3 p-3">
+                                        <div className="pt-1">
+                                            <DataSetCheckbox dataSet={dataSet} />
+                                        </div>
+
                                         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedDataSetId(isExpanded ? null : dataSet.id)}>
-                                            <p className="text-sm font-medium text-zinc-900 truncate">{dateRange}</p>
-                                            <div className="flex items-center gap-3 mt-0.5 min-w-0">
-                                                <span className="text-xs text-zinc-500 min-w-0 flex-1 truncate">{dataSet.name}</span>
+                                            <div className="flex items-start justify-between gap-3">
+                                                <p className="text-sm font-medium text-zinc-900 truncate">{dateRange}</p>
                                                 <span className="text-xs text-zinc-400 whitespace-nowrap">上傳：{formatZhDateTime(dataSet.uploadDate)}</span>
+                                            </div>
+
+                                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+                                                <span className="text-xs text-zinc-500 min-w-0 flex-1 truncate">{dataSet.name}</span>
+                                                <span className="text-xs text-zinc-500 whitespace-nowrap">平台：{platformLabel}</span>
                                                 <div className="flex gap-1 flex-shrink-0">{platforms.map(p => <PlatformIcon key={p} platform={p} />)}</div>
                                             </div>
+
+                                            {postTypeChips.length > 0 && (
+                                                <div className="mt-2 flex flex-wrap items-center gap-1">
+                                                    <span className="text-[11px] text-zinc-500 mr-1">貼文類型：</span>
+                                                    {postTypeChips.map(({ type, count }) => (
+                                                        <span
+                                                            key={type}
+                                                            className="text-[11px] px-2 py-0.5 rounded-full bg-white border border-zinc-200 text-zinc-600"
+                                                            title={type}
+                                                        >
+                                                            {type} ×{count}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex items-center gap-2">
+
+                                        <div className="flex items-center gap-2 flex-shrink-0">
                                             <span className="text-xs text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded">{enabledPostsCount} / {dataSet.posts.length}</span>
                                             <button onClick={() => onDeleteDataSet(dataSet.id)} className="p-1.5 text-zinc-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"><svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg></button>
                                         </div>
                                     </div>
+
                                     {isExpanded && (
                                         <div className="border-t border-zinc-200 bg-white max-h-60 overflow-y-auto">
                                             <table className="w-full text-xs text-left">
@@ -1018,7 +1064,7 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                                                             <td className="px-3 py-2 text-center">
                                                                 <input type="checkbox" checked={!!selectionState.enabledPostPermalinks[post.permalink]} onChange={(e) => handlePostToggle(post.permalink, dataSet.id, e.target.checked)} className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500" />
                                                             </td>
-                                                            <td className="px-3 py-2 text-zinc-700 truncate max-w-[200px]">{post.content}</td>
+                                                            <td className="px-3 py-2 text-zinc-700 truncate max-w-[240px]">{post.content}</td>
                                                             <td className="px-3 py-2 text-zinc-500 whitespace-nowrap">{format(post.publishTime, 'MMM d, HH:mm')}</td>
                                                         </tr>
                                                     ))}
@@ -1027,7 +1073,7 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                                         </div>
                                     )}
                                 </div>
-                            )
+                            );
                         })}
                     </div>
                 </div>
