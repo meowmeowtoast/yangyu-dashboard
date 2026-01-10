@@ -157,10 +157,10 @@ export const LocalDataManager: React.FC<{
     return (
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wider">本機資料操作</h2>
-            <div className="flex items-center flex-wrap gap-3">
-                <button onClick={onExportData} className="px-3 py-2 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200">匯出備份 (JSON)</button>
+            <div className="flex items-center flex-nowrap gap-3 overflow-x-auto">
+                <button onClick={onExportData} className="flex-shrink-0 whitespace-nowrap px-3 py-2 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200">匯出備份 (JSON)</button>
                 
-                <label className="cursor-pointer px-3 py-2 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200 flex items-center">
+                <label className="flex-shrink-0 whitespace-nowrap cursor-pointer px-3 py-2 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200 flex items-center">
                     匯入備份 (JSON)
                     <input 
                         type="file" 
@@ -171,9 +171,9 @@ export const LocalDataManager: React.FC<{
                     />
                 </label>
 
-                <div className="h-4 w-px bg-zinc-300 mx-1"></div>
-                <button onClick={() => setIsClearRangeModalOpen(true)} className="px-3 py-2 text-amber-600 bg-amber-50 text-sm font-medium rounded-lg hover:bg-amber-100 transition-colors border border-amber-200">清除範圍資料</button>
-                <button onClick={onClearAllData} className="px-3 py-2 text-rose-600 bg-rose-50 text-sm font-medium rounded-lg hover:bg-rose-100 transition-colors border border-rose-200">清除所有資料</button>
+                <div className="flex-shrink-0 h-4 w-px bg-zinc-300 mx-1"></div>
+                <button onClick={() => setIsClearRangeModalOpen(true)} className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-amber-600 bg-amber-50 text-sm font-medium rounded-lg hover:bg-amber-100 transition-colors border border-amber-200">清除範圍資料</button>
+                <button onClick={onClearAllData} className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-rose-600 bg-rose-50 text-sm font-medium rounded-lg hover:bg-rose-100 transition-colors border border-rose-200">清除所有資料</button>
             </div>
 
             {showDebugTools && (
@@ -689,7 +689,7 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                         </div>
                         <button
                             onClick={loadSharedViews}
-                            className="px-3 py-2 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 dark:hover:bg-zinc-700"
+                            className="flex-shrink-0 whitespace-nowrap px-3 py-2 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700 dark:hover:bg-zinc-700"
                             disabled={isLoadingSharedViews}
                         >
                             {isLoadingSharedViews ? '載入中…' : '載入清單'}
