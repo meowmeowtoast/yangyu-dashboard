@@ -623,7 +623,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                 </div>
                 
-                {!isReadOnly && (
+                {!isReadOnly ? (
                     <div className="flex flex-wrap items-center gap-2">
                         {(Object.keys(dateRanges) as DateRangeKey[]).map((key) => (
                             <button
@@ -658,6 +658,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                             </div>
                         )}
                         <span className="ml-auto text-xs text-zinc-400 font-medium">{dateRangeLabel}</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-end">
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">期間：{dateRangeLabel}</span>
                     </div>
                 )}
             </div>
