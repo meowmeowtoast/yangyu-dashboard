@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     return (
         <aside 
-            className={`flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-xl h-screen transition-all duration-300 ease-in-out fixed left-0 top-0 z-50 w-[260px] ${
+            className={`flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/95 dark:bg-zinc-900/95 backdrop-blur-xl h-[100dvh] transition-all duration-300 ease-in-out fixed left-0 top-0 z-50 w-[260px] ${
                 isCollapsed ? 'md:w-[72px]' : 'md:w-[260px]'
             } ${
                 isMobileOpen ? 'translate-x-0' : '-translate-x-full'

@@ -71,7 +71,7 @@ const ReportPage = () => {
     }, []);
 
     if (!reportData) {
-        return <div className="flex items-center justify-center min-h-screen">正在產生報表...</div>;
+        return <div className="flex items-center justify-center min-h-[100dvh]">正在產生報表...</div>;
     }
 
     const {

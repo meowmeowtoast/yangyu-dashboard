@@ -854,7 +854,7 @@ const App: React.FC = () => {
 
     if (isLoading || isRestoring) {
         return (
-            <div className="flex flex-col items-center justify-center h-screen bg-zinc-50 dark:bg-zinc-900 gap-4">
+            <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-zinc-50 dark:bg-zinc-900 gap-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-zinc-500"></div>
                 {isRestoring && <p className="text-zinc-600 dark:text-zinc-400 font-medium">正在還原資料，請稍候...</p>}
             </div>
@@ -862,7 +862,7 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex font-inter">
+        <div className="min-h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex font-inter overflow-x-hidden">
             {isMobileNavOpen && (
                 <div
                     className="fixed inset-0 bg-black/30 z-40 md:hidden"
@@ -941,7 +941,7 @@ const App: React.FC = () => {
             />
             
             <main 
-                className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ease-in-out px-4 sm:px-6 py-6 sm:py-8 ml-0 ${
+                className={`flex-1 min-h-[100dvh] flex flex-col transition-all duration-300 ease-in-out px-4 sm:px-6 py-6 sm:py-8 ml-0 ${
                     isSidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-[260px]'
                 }`}
             >

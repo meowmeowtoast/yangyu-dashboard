@@ -33,7 +33,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     if (this.state.hasError) {
       const showDebug = typeof window !== 'undefined' && window.location.search.includes('debug=1');
       return (
-        <div className="p-8 text-center min-h-screen flex flex-col items-center justify-center bg-red-50 dark:bg-slate-900">
+        <div className="p-8 text-center min-h-[100dvh] flex flex-col items-center justify-center bg-red-50 dark:bg-slate-900">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg max-w-lg w-full text-left">
             <h1 className="text-2xl font-bold text-red-600 mb-2 text-center">發生錯誤</h1>
             <p className="text-slate-600 dark:text-slate-300 mb-4 text-center">應用程式發生未預期的錯誤。</p>
@@ -84,7 +84,7 @@ const handleEmergencyReset = async () => {
 
 const renderErrorFallback = (error: Error) => {
     root.render(
-      <div className="p-8 text-center bg-red-50 dark:bg-slate-900 text-red-700 dark:text-red-300 min-h-screen flex flex-col items-center justify-center">
+      <div className="p-8 text-center bg-red-50 dark:bg-slate-900 text-red-700 dark:text-red-300 min-h-[100dvh] flex flex-col items-center justify-center">
         <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg border border-red-200 dark:border-red-800">
             <h1 className="text-2xl font-bold">應用程式初始化失敗</h1>
             <p className="mt-2">無法連接至後端服務或載入資料時發生嚴重錯誤。</p>

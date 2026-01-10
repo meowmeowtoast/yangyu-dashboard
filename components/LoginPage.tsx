@@ -53,7 +53,7 @@ const LoginPage: React.FC = () => {
     }
     
     return (
-        <div className="flex flex-col min-h-screen bg-slate-100 dark:bg-slate-900">
+        <div className="flex flex-col min-h-[100dvh] bg-slate-100 dark:bg-slate-900">
             <main className="flex-grow flex flex-col items-center justify-center p-4">
                 <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg text-center">
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">秧語社群儀表板</h1>
