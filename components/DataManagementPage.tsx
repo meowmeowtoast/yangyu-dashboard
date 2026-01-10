@@ -760,17 +760,17 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                             const isExpanded = expandedDataSetId === dataSet.id;
                             const enabledPostsCount = dataSet.posts.filter(p => !!selectionState.enabledPostPermalinks[p.permalink]).length;
                             
-                            const { dateRange, platforms } = useMemo(() => {
-                                if (!dataSet.posts || dataSet.posts.length === 0) return { dateRange: 'N/A', platforms: [] };
+                            const { dateRange, platforms } = (() => {
+                                if (!dataSet.posts || dataSet.posts.length === 0) return { dateRange: 'N/A', platforms: [] as ('Facebook' | 'Instagram')[] };
                                 const dates = dataSet.posts.map(p => p.publishTime);
                                 const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
                                 const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
                                 const platformSet = new Set(dataSet.posts.map(p => p.platform));
-                                return { 
-                                    dateRange: `${format(minDate, 'MMM d')} - ${format(maxDate, 'MMM d, yyyy')}`, 
-                                    platforms: Array.from(platformSet) as ('Facebook' | 'Instagram')[] 
+                                return {
+                                    dateRange: `${format(minDate, 'MMM d')} - ${format(maxDate, 'MMM d, yyyy')}`,
+                                    platforms: Array.from(platformSet) as ('Facebook' | 'Instagram')[],
                                 };
-                            }, [dataSet.posts]);
+                            })();
 
                             return (
                                 <div key={dataSet.id} className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden transition-all duration-200 bg-zinc-50/50 hover:bg-zinc-50 hover:shadow-sm">
