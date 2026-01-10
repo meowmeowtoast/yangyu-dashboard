@@ -1108,11 +1108,10 @@ const App: React.FC = () => {
                     setIsDataManagementDirty(false);
                     await deleteWorkspaceClient(clientId);
                 } : undefined}
-                logoUrl={companyProfile?.logo || ''}
             />
             
             <main 
-                className={`flex-1 min-h-0 flex flex-col transition-all duration-300 ease-in-out px-4 sm:px-6 py-6 sm:py-8 ml-0 ${
+                className={`flex-1 min-h-0 flex flex-col transition-all duration-300 ease-in-out px-4 sm:px-6 pt-6 sm:pt-8 pb-0 ml-0 ${
                     isSidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-[260px]'
                 }`}
             >
@@ -1131,6 +1130,13 @@ const App: React.FC = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
                             </button>
+                            {companyProfile?.logo ? (
+                                <img
+                                    src={companyProfile.logo}
+                                    alt="Custom Logo"
+                                    className="h-10 w-auto max-w-[140px] flex-shrink-0"
+                                />
+                            ) : null}
                             <div>
                                 <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                                     {currentView === 'dashboard' ? '儀表板總覽' : '資料集管理'}

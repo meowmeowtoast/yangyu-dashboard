@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { ClientThemeColor } from '../types';
 
 type View = 'dashboard' | 'dataManagement';
@@ -11,7 +11,6 @@ interface SidebarProps {
     isCollapsed: boolean;
     toggleCollapse: () => void;
 
-    logoUrl?: string;
 
     isMobileOpen?: boolean;
     onCloseMobile?: () => void;
@@ -32,7 +31,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     isReadOnly, 
     isCollapsed, 
     toggleCollapse,
-    logoUrl = '',
     isMobileOpen = false,
     onCloseMobile,
     workspaceClients,
@@ -58,6 +56,15 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [editingClientName, setEditingClientName] = useState('');
     const [editingClientColor, setEditingClientColor] = useState<ClientThemeColor>('stone');
     const [editingClientCustomColor, setEditingClientCustomColor] = useState<string>('#777777');
+
+    const [openClientMenuId, setOpenClientMenuId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!openClientMenuId) return;
+        const onWindowClick = () => setOpenClientMenuId(null);
+        window.addEventListener('click', onWindowClick);
+        return () => window.removeEventListener('click', onWindowClick);
+    }, [openClientMenuId]);
 
     const clientColorOptions = useMemo(() => {
         return [
@@ -215,7 +222,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onCloseMobile?.();
             }}
             disabled={disabled}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
+            className={`w-full flex items-center rounded-lg transition-all duration-200 text-sm font-medium ${
+                isCollapsed ? 'justify-center px-2 py-2' : 'gap-3 px-3 py-2'
+            } ${
                 disabled ? 'opacity-50 cursor-not-allowed text-zinc-400' :
                 currentView === view ? activeItemClass : hoverItemClass
             }`}
@@ -240,44 +249,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <div className={`min-w-0 ${isCollapsed ? 'w-full flex justify-center md:justify-center' : ''}`}>
                         {/* Mobile: always show full title */}
                         <div className="md:hidden min-w-0">
-                            <div className="flex items-center gap-2 min-w-0">
-                                {logoUrl ? (
-                                    <img
-                                        src={logoUrl}
-                                        alt="Custom Logo"
-                                        className="h-8 w-auto max-w-[120px] flex-shrink-0"
-                                    />
-                                ) : null}
-                                <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
-                            </div>
+                            <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
                         </div>
 
                         {/* Desktop: collapse shows only Y */}
                         <div className="hidden md:block min-w-0">
                             {isCollapsed ? (
-                                logoUrl ? (
-                                    <div className="w-full flex justify-center">
-                                        <img
-                                            src={logoUrl}
-                                            alt="Custom Logo"
-                                            className="h-8 w-8 object-contain flex-shrink-0"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none text-center">Y</div>
-                                )
+                                <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none text-center">Y</div>
                             ) : (
                                 <>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        {logoUrl ? (
-                                            <img
-                                                src={logoUrl}
-                                                alt="Custom Logo"
-                                                className="h-8 w-auto max-w-[120px] flex-shrink-0"
-                                            />
-                                        ) : null}
-                                        <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
-                                    </div>
+                                    <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
                                 </>
                             )}
                         </div>
@@ -413,7 +394,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     const isEditing = editingClientId === c.id;
                                     const swatchClass = getSwatchClass(c.color);
                                     const swatchStyle = getCustomSwatchStyle(c.color, c.customColor);
-                                    const baseClass = 'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium';
+                                    const baseClass = `w-full flex items-center rounded-lg transition-all duration-200 text-sm font-medium ${
+                                        isCollapsed ? 'justify-center px-2 py-2' : 'gap-3 px-3 py-2'
+                                    }`;
                                     const activeClass = 'text-zinc-900 bg-white border border-zinc-200 shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100';
                                     const hoverClass = 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200';
 
@@ -427,7 +410,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                     onCloseMobile?.();
                                                 }}
                                                 disabled={disabled}
-                                                className={`${baseClass} pr-2 text-left ${disabled ? 'cursor-not-allowed' : ''} ${isActive ? activeClass : hoverClass}`}
+                                                className={`${baseClass} ${isCollapsed ? '' : 'pr-2 text-left'} ${disabled ? 'cursor-not-allowed' : ''} ${isActive ? activeClass : hoverClass}`}
                                                 title={isCollapsed ? c.name : undefined}
                                             >
                                                 <span className={`flex-shrink-0 w-3.5 h-3.5 rounded-full ${swatchClass}`} style={swatchStyle} aria-hidden />
@@ -491,36 +474,61 @@ const Sidebar: React.FC<SidebarProps> = ({
                                                 )}
 
                                                 {!isCollapsed && !isEditing && !isReadOnly && (
-                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="relative flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button
                                                             type="button"
                                                             onClick={(e) => {
                                                                 e.preventDefault();
                                                                 e.stopPropagation();
-                                                                setEditingClientId(c.id);
-                                                                setEditingClientName(c.name);
-                                                                setEditingClientColor(c.color || 'stone');
-                                                                setEditingClientCustomColor(isHexColor(c.customColor) ? c.customColor!.trim() : '#777777');
+                                                                setOpenClientMenuId((prev) => (prev === c.id ? null : c.id));
                                                             }}
-                                                            className="px-2 py-1 rounded-md text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800"
-                                                            disabled={Boolean(isClientSwitching) || !onRenameClient}
-                                                            title="編輯名稱"
+                                                            className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800"
+                                                            disabled={Boolean(isClientSwitching)}
+                                                            aria-label="更多操作"
+                                                            title="更多操作"
                                                         >
-                                                            編輯
+                                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <circle cx="12" cy="5" r="1" />
+                                                                <circle cx="12" cy="12" r="1" />
+                                                                <circle cx="12" cy="19" r="1" />
+                                                            </svg>
                                                         </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                e.stopPropagation();
-                                                                onDeleteClient?.(c.id);
-                                                            }}
-                                                            className="px-2 py-1 rounded-md text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-                                                            disabled={Boolean(isClientSwitching) || !onDeleteClient}
-                                                            title="刪除客戶"
-                                                        >
-                                                            刪除
-                                                        </button>
+
+                                                        {openClientMenuId === c.id && (
+                                                            <div
+                                                                className="absolute right-0 top-full mt-1 w-28 rounded-lg border border-zinc-200 bg-white shadow-lg z-50 dark:border-zinc-800 dark:bg-zinc-900"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                }}
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setOpenClientMenuId(null);
+                                                                        setEditingClientId(c.id);
+                                                                        setEditingClientName(c.name);
+                                                                        setEditingClientColor(c.color || 'stone');
+                                                                        setEditingClientCustomColor(isHexColor(c.customColor) ? c.customColor!.trim() : '#777777');
+                                                                    }}
+                                                                    className="w-full px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                                                    disabled={!onRenameClient}
+                                                                >
+                                                                    編輯
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setOpenClientMenuId(null);
+                                                                        onDeleteClient?.(c.id);
+                                                                    }}
+                                                                    className="w-full px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                                                                    disabled={!onDeleteClient}
+                                                                >
+                                                                    刪除
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </button>
