@@ -10,10 +10,10 @@ const Footer: React.FC = () => {
                         <span>2025© Yangyu Studio</span>
                     </div>
                     <a
-                        href="mailto:yangyustudio.co@gmail.com"
+                        href="mailto:contact@yangyu.co"
                         className="hover:text-emerald-600 dark:hover:text-emerald-500 transition-colors break-all"
                     >
-                        yangyustudio.co@gmail.com
+                        contact@yangyu.co
                     </a>
                 </div>
             </div>

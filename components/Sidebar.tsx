@@ -11,6 +11,8 @@ interface SidebarProps {
     isCollapsed: boolean;
     toggleCollapse: () => void;
 
+    logoUrl?: string;
+
     isMobileOpen?: boolean;
     onCloseMobile?: () => void;
 
@@ -30,6 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     isReadOnly, 
     isCollapsed, 
     toggleCollapse,
+    logoUrl = '',
     isMobileOpen = false,
     onCloseMobile,
     workspaceClients,
@@ -237,16 +240,44 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <div className={`min-w-0 ${isCollapsed ? 'w-full flex justify-center md:justify-center' : ''}`}>
                         {/* Mobile: always show full title */}
                         <div className="md:hidden min-w-0">
-                            <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
+                            <div className="flex items-center gap-2 min-w-0">
+                                {logoUrl ? (
+                                    <img
+                                        src={logoUrl}
+                                        alt="Custom Logo"
+                                        className="h-8 w-auto max-w-[120px] flex-shrink-0"
+                                    />
+                                ) : null}
+                                <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
+                            </div>
                         </div>
 
                         {/* Desktop: collapse shows only Y */}
                         <div className="hidden md:block min-w-0">
                             {isCollapsed ? (
-                                <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none text-center">Y</div>
+                                logoUrl ? (
+                                    <div className="w-full flex justify-center">
+                                        <img
+                                            src={logoUrl}
+                                            alt="Custom Logo"
+                                            className="h-8 w-8 object-contain flex-shrink-0"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="text-lg font-bold text-emerald-600 tracking-wider leading-none text-center">Y</div>
+                                )
                             ) : (
                                 <>
-                                    <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        {logoUrl ? (
+                                            <img
+                                                src={logoUrl}
+                                                alt="Custom Logo"
+                                                className="h-8 w-auto max-w-[120px] flex-shrink-0"
+                                            />
+                                        ) : null}
+                                        <div className="text-base font-bold text-emerald-600 tracking-wider leading-none truncate whitespace-nowrap">YANGYU 社群儀表板</div>
+                                    </div>
                                 </>
                             )}
                         </div>

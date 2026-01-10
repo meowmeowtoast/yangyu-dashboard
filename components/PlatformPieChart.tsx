@@ -22,13 +22,13 @@ const PlatformPieChart: React.FC<{ data: NormalizedPost[] }> = ({ data }) => {
     const total = useMemo(() => chartData.reduce((sum, item) => sum + item.value, 0), [chartData]);
 
     if (total === 0) {
-        return <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">沒有可顯示的資料</div>;
+        return <div className="flex items-center justify-center py-10 text-slate-500 dark:text-slate-400">沒有可顯示的資料</div>;
     }
     
     let cumulativePercentage = 0;
 
     return (
-        <div className="flex flex-col md:flex-row items-center justify-center h-full gap-8">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-8">
             <div className="relative w-48 h-48">
                  <svg viewBox="0 0 36 36" className="w-full h-full block">
                     {chartData.map(entry => {

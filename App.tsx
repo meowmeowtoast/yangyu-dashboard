@@ -1108,10 +1108,11 @@ const App: React.FC = () => {
                     setIsDataManagementDirty(false);
                     await deleteWorkspaceClient(clientId);
                 } : undefined}
+                logoUrl={companyProfile?.logo || ''}
             />
             
             <main 
-                className={`flex-1 min-h-[100dvh] flex flex-col transition-all duration-300 ease-in-out px-4 sm:px-6 py-6 sm:py-8 ml-0 ${
+                className={`flex-1 min-h-0 flex flex-col transition-all duration-300 ease-in-out px-4 sm:px-6 py-6 sm:py-8 ml-0 ${
                     isSidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-[260px]'
                 }`}
             >
