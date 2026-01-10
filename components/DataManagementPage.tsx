@@ -157,23 +157,43 @@ export const LocalDataManager: React.FC<{
     return (
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wider">本機資料操作</h2>
-            <div className="flex items-center flex-nowrap gap-3 overflow-x-auto">
-                <button onClick={onExportData} className="flex-shrink-0 whitespace-nowrap px-3 py-2 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200">匯出備份 (JSON)</button>
-                
-                <label className="flex-shrink-0 whitespace-nowrap cursor-pointer px-3 py-2 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200 flex items-center">
-                    匯入備份 (JSON)
-                    <input 
-                        type="file" 
-                        onChange={handleImportBackup} 
-                        className="hidden" 
-                        accept=".json" 
+            <div className="grid grid-cols-4 gap-2">
+                <button
+                    onClick={onExportData}
+                    className="w-full min-w-0 truncate whitespace-nowrap px-2 py-2 bg-zinc-100 text-zinc-700 text-xs font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200"
+                    title="匯出備份"
+                >
+                    匯出備份
+                </button>
+
+                <label
+                    className="w-full min-w-0 truncate whitespace-nowrap cursor-pointer px-2 py-2 bg-zinc-100 text-zinc-700 text-xs font-medium rounded-lg hover:bg-zinc-200 transition-colors border border-zinc-200 flex items-center justify-center"
+                    title="匯入備份"
+                >
+                    匯入備份
+                    <input
+                        type="file"
+                        onChange={handleImportBackup}
+                        className="hidden"
+                        accept=".json"
                         onClick={(e) => (e.target as HTMLInputElement).value = ''}
                     />
                 </label>
 
-                <div className="flex-shrink-0 h-4 w-px bg-zinc-300 mx-1"></div>
-                <button onClick={() => setIsClearRangeModalOpen(true)} className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-amber-600 bg-amber-50 text-sm font-medium rounded-lg hover:bg-amber-100 transition-colors border border-amber-200">清除範圍資料</button>
-                <button onClick={onClearAllData} className="flex-shrink-0 whitespace-nowrap px-3 py-2 text-rose-600 bg-rose-50 text-sm font-medium rounded-lg hover:bg-rose-100 transition-colors border border-rose-200">清除所有資料</button>
+                <button
+                    onClick={() => setIsClearRangeModalOpen(true)}
+                    className="w-full min-w-0 truncate whitespace-nowrap px-2 py-2 text-amber-700 bg-amber-50 text-xs font-medium rounded-lg hover:bg-amber-100 transition-colors border border-amber-200"
+                    title="清除範圍資料"
+                >
+                    清除範圍
+                </button>
+                <button
+                    onClick={onClearAllData}
+                    className="w-full min-w-0 truncate whitespace-nowrap px-2 py-2 text-rose-700 bg-rose-50 text-xs font-medium rounded-lg hover:bg-rose-100 transition-colors border border-rose-200"
+                    title="清除所有資料"
+                >
+                    清除全部
+                </button>
             </div>
 
             {showDebugTools && (
@@ -938,6 +958,20 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                             const isExpanded = expandedDataSetId === dataSet.id;
                             const enabledPostsCount = dataSet.posts.filter(p => !!selectionState.enabledPostPermalinks[p.permalink]).length;
 
+                            const pad2 = (n: number) => String(n).padStart(2, '0');
+
+                            const formatZhDate = (date: Date): string => {
+                                const t = date.getTime();
+                                if (!Number.isFinite(t)) return '—';
+                                return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+                            };
+
+                            const formatZhDateTime = (uploadDate: string): string => {
+                                const d = new Date(uploadDate);
+                                if (!uploadDate || !Number.isFinite(d.getTime())) return '—';
+                                return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+                            };
+
                             const getPostTime = (p: NormalizedPost) => {
                                 const d = (p.publishTime instanceof Date ? p.publishTime : new Date(p.publishTime as any));
                                 const t = d.getTime();
@@ -952,7 +986,7 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                                 const maxDate = new Date(getPostTime(sortedPosts[sortedPosts.length - 1]));
                                 const platformSet = new Set(sortedPosts.map(p => p.platform));
                                 return {
-                                    dateRange: `${format(minDate, 'MMM d')} - ${format(maxDate, 'MMM d, yyyy')}`,
+                                    dateRange: `${formatZhDate(minDate)}－${formatZhDate(maxDate)}`,
                                     platforms: Array.from(platformSet) as ('Facebook' | 'Instagram')[],
                                 };
                             })();
@@ -962,10 +996,11 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                                     <div className="flex items-center gap-3 p-3">
                                         <DataSetCheckbox dataSet={dataSet} />
                                         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedDataSetId(isExpanded ? null : dataSet.id)}>
-                                            <p className="text-sm font-medium text-zinc-900 truncate">{dataSet.name}</p>
-                                            <div className="flex items-center gap-3 mt-0.5">
-                                                <span className="text-xs text-zinc-500">{dateRange}</span>
-                                                <div className="flex gap-1">{platforms.map(p => <PlatformIcon key={p} platform={p} />)}</div>
+                                            <p className="text-sm font-medium text-zinc-900 truncate">{dateRange}</p>
+                                            <div className="flex items-center gap-3 mt-0.5 min-w-0">
+                                                <span className="text-xs text-zinc-500 min-w-0 flex-1 truncate">{dataSet.name}</span>
+                                                <span className="text-xs text-zinc-400 whitespace-nowrap">上傳：{formatZhDateTime(dataSet.uploadDate)}</span>
+                                                <div className="flex gap-1 flex-shrink-0">{platforms.map(p => <PlatformIcon key={p} platform={p} />)}</div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
