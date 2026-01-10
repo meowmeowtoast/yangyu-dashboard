@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import type { AnalysisData } from '../types';
+import type { AnalysisData, AnalysisDisplaySettings } from '../types';
 
 interface Props {
     savedData: AnalysisData;
     onSave: (data: AnalysisData) => void;
     isReadOnly: boolean;
+    displaySettings?: AnalysisDisplaySettings;
 }
 
 const EditIcon: React.FC = () => (
@@ -14,18 +15,27 @@ const EditIcon: React.FC = () => (
     </svg>
 );
 
-const AnalysisAndSuggestions: React.FC<Props> = ({ savedData, onSave, isReadOnly }) => {
+const AnalysisAndSuggestions: React.FC<Props> = ({ savedData, onSave, isReadOnly, displaySettings }) => {
     const [data, setData] = useState<AnalysisData>(savedData);
     const [isEditing, setIsEditing] = useState(false);
 
+    const settings: AnalysisDisplaySettings = displaySettings || { insights: true, contentSuggestions: true, platformAdjustments: true };
+    const anyVisible = settings.insights || settings.contentSuggestions || settings.platformAdjustments;
+
     useEffect(() => {
         setData(savedData);
-        if (!isReadOnly && !savedData.insights && !savedData.contentSuggestions && !savedData.platformAdjustments) {
+        const visibleEmpty = (
+            (!settings.insights || !savedData.insights) &&
+            (!settings.contentSuggestions || !savedData.contentSuggestions) &&
+            (!settings.platformAdjustments || !savedData.platformAdjustments)
+        );
+
+        if (!isReadOnly && anyVisible && visibleEmpty) {
             setIsEditing(true);
         } else {
             setIsEditing(false);
         }
-    }, [savedData, isReadOnly]);
+    }, [savedData, isReadOnly, anyVisible, settings.contentSuggestions, settings.insights, settings.platformAdjustments]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -40,7 +50,12 @@ const AnalysisAndSuggestions: React.FC<Props> = ({ savedData, onSave, isReadOnly
 
     const handleCancel = () => {
         setData(savedData);
-        if (savedData.insights || savedData.contentSuggestions || savedData.platformAdjustments) {
+        const anySavedVisible = (
+            (settings.insights && !!savedData.insights) ||
+            (settings.contentSuggestions && !!savedData.contentSuggestions) ||
+            (settings.platformAdjustments && !!savedData.platformAdjustments)
+        );
+        if (anySavedVisible) {
              setIsEditing(false);
         }
     };
@@ -54,47 +69,57 @@ const AnalysisAndSuggestions: React.FC<Props> = ({ savedData, onSave, isReadOnly
         </div>
     );
 
+    if (!anyVisible) {
+        return null;
+    }
+
     if (isEditing && !isReadOnly) {
         return (
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm">
                 <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">分析與建議</h3>
                 <div className="space-y-4">
-                    <div>
-                        <label htmlFor="insights" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">本月重點洞察</label>
-                        <textarea
-                            id="insights"
-                            name="insights"
-                            rows={4}
-                            className="w-full p-2 border border-slate-300 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="輸入您觀察到的重點..."
-                            value={data.insights}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="contentSuggestions" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">內容方向建議</label>
-                        <textarea
-                            id="contentSuggestions"
-                            name="contentSuggestions"
-                            rows={4}
-                            className="w-full p-2 border border-slate-300 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="根據洞察，提出未來的內容方向..."
-                            value={data.contentSuggestions}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="platformAdjustments" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">平台策略調整</label>
-                        <textarea
-                            id="platformAdjustments"
-                            name="platformAdjustments"
-                            rows={4}
-                            className="w-full p-2 border border-slate-300 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="是否有需要調整的平台經營策略..."
-                            value={data.platformAdjustments}
-                            onChange={handleChange}
-                        />
-                    </div>
+                    {settings.insights && (
+                        <div>
+                            <label htmlFor="insights" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">本月重點洞察</label>
+                            <textarea
+                                id="insights"
+                                name="insights"
+                                rows={4}
+                                className="w-full p-2 border border-slate-300 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                                placeholder="輸入您觀察到的重點..."
+                                value={data.insights}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    )}
+                    {settings.contentSuggestions && (
+                        <div>
+                            <label htmlFor="contentSuggestions" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">內容方向建議</label>
+                            <textarea
+                                id="contentSuggestions"
+                                name="contentSuggestions"
+                                rows={4}
+                                className="w-full p-2 border border-slate-300 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                                placeholder="根據洞察，提出未來的內容方向..."
+                                value={data.contentSuggestions}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    )}
+                    {settings.platformAdjustments && (
+                        <div>
+                            <label htmlFor="platformAdjustments" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">平台策略調整</label>
+                            <textarea
+                                id="platformAdjustments"
+                                name="platformAdjustments"
+                                rows={4}
+                                className="w-full p-2 border border-slate-300 bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                                placeholder="是否有需要調整的平台經營策略..."
+                                value={data.platformAdjustments}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    )}
                     <div className="flex justify-end items-center gap-2">
                         <button
                             onClick={handleCancel}
@@ -129,9 +154,9 @@ const AnalysisAndSuggestions: React.FC<Props> = ({ savedData, onSave, isReadOnly
                 )}
             </div>
             <div className="space-y-4">
-                <ReadOnlyView label="本月重點洞察" value={data.insights} />
-                <ReadOnlyView label="內容方向建議" value={data.contentSuggestions} />
-                <ReadOnlyView label="平台策略調整" value={data.platformAdjustments} />
+                {settings.insights && <ReadOnlyView label="本月重點洞察" value={data.insights} />}
+                {settings.contentSuggestions && <ReadOnlyView label="內容方向建議" value={data.contentSuggestions} />}
+                {settings.platformAdjustments && <ReadOnlyView label="平台策略調整" value={data.platformAdjustments} />}
             </div>
         </div>
     );

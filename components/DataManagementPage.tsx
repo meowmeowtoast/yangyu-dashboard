@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import FileUpload from './FileUpload';
 import Modal from './Modal';
-import type { NormalizedPost, DataSet, SelectionState, AllMonthlyFollowerData, MonthlyFollowerData, BaseFollowerData, CompanyProfile, AnalysisData, UserData } from '../types';
+import type { NormalizedPost, DataSet, SelectionState, AllMonthlyFollowerData, MonthlyFollowerData, BaseFollowerData, CompanyProfile, AnalysisData, UserData, AnalysisDisplaySettings } from '../types';
 import { format } from 'date-fns/format';
 import { addMonths } from 'date-fns/addMonths';
 import PlatformIcon from './PlatformIcon';
@@ -22,6 +22,8 @@ interface DataManagementPageProps {
     onBaseFollowerDataUpdate: (newData: BaseFollowerData) => void;
     companyProfile: CompanyProfile;
     onCompanyProfileUpdate: (newProfile: CompanyProfile) => void;
+    analysisDisplaySettings?: AnalysisDisplaySettings;
+    onAnalysisDisplaySettingsUpdate: (newSettings: AnalysisDisplaySettings) => void;
     onExportData: () => void;
     onImportData: (file: File) => void;
     onBackupRequest: () => UserData & { analyses: Record<string, AnalysisData> };
@@ -239,6 +241,8 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
     onBaseFollowerDataUpdate,
     companyProfile,
     onCompanyProfileUpdate,
+    analysisDisplaySettings,
+    onAnalysisDisplaySettingsUpdate,
     onExportData,
     onImportData,
     onBackupRequest,
@@ -261,6 +265,11 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
     const [isBaseDirty, setIsBaseDirty] = useState(false);
     const [profile, setProfile] = useState<CompanyProfile>({ companyName: '', instagramUrl: '', facebookUrl: '', logo: '' });
     const [isProfileDirty, setIsProfileDirty] = useState(false);
+
+    const [analysisSettings, setAnalysisSettings] = useState<AnalysisDisplaySettings>(
+        analysisDisplaySettings || { insights: true, contentSuggestions: true, platformAdjustments: true }
+    );
+    const [isAnalysisDirty, setIsAnalysisDirty] = useState(false);
 
     const [sharedViews, setSharedViews] = useState<KVStore.SharedViewIndexItem[]>([]);
     const [isLoadingSharedViews, setIsLoadingSharedViews] = useState(false);
@@ -311,7 +320,7 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
         }
     }, [selectedMonth, expandedDataSetId, viewStateStorageKey]);
 
-    const isDirty = isMonthlyDirty || isBaseDirty || isProfileDirty;
+    const isDirty = isMonthlyDirty || isBaseDirty || isProfileDirty || isAnalysisDirty;
     const lastDirtyRef = useRef<boolean>(false);
     useEffect(() => {
         if (!onDirtyChange) return;
@@ -353,6 +362,30 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
         if (isProfileDirty) return;
         setProfile(companyProfile);
     }, [companyProfile, isProfileDirty]);
+
+    useEffect(() => {
+        if (isAnalysisDirty) return;
+        setAnalysisSettings(analysisDisplaySettings || { insights: true, contentSuggestions: true, platformAdjustments: true });
+    }, [analysisDisplaySettings, isAnalysisDirty]);
+
+    const toggleAnalysisSetting = (key: keyof AnalysisDisplaySettings) => {
+        setAnalysisSettings(prev => {
+            const next = { ...prev, [key]: !prev[key] };
+            setIsAnalysisDirty(true);
+            return next;
+        });
+    };
+
+    const handleSaveAnalysisSettings = () => {
+        const anySelected = analysisSettings.insights || analysisSettings.contentSuggestions || analysisSettings.platformAdjustments;
+        if (!anySelected) {
+            alert('至少需要選擇一個要顯示的區塊。');
+            return;
+        }
+        onAnalysisDisplaySettingsUpdate(analysisSettings);
+        setIsAnalysisDirty(false);
+        alert('分析與建議顯示設定已儲存！');
+    };
 
 
     const handleFollowerDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -802,6 +835,54 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
                         </div>
                     </div>
                     <div className="flex justify-end mt-4"><button onClick={handleSaveFollowerData} className="px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800">儲存</button></div>
+                </div>
+
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                        <div>
+                            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">分析與建議顯示設定</h2>
+                            <p className="text-sm text-zinc-500 mt-1">可勾選要在儀表板／報表顯示的區塊。</p>
+                        </div>
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={handleSaveAnalysisSettings}
+                                className="px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800"
+                            >
+                                儲存顯示設定
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40">
+                            <input
+                                type="checkbox"
+                                className="h-4 w-4 accent-zinc-900"
+                                checked={Boolean(analysisSettings.insights)}
+                                onChange={() => toggleAnalysisSetting('insights')}
+                            />
+                            <span className="text-sm text-zinc-800 dark:text-zinc-200">本月重點洞察</span>
+                        </label>
+                        <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40">
+                            <input
+                                type="checkbox"
+                                className="h-4 w-4 accent-zinc-900"
+                                checked={Boolean(analysisSettings.contentSuggestions)}
+                                onChange={() => toggleAnalysisSetting('contentSuggestions')}
+                            />
+                            <span className="text-sm text-zinc-800 dark:text-zinc-200">內容方向建議</span>
+                        </label>
+                        <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40">
+                            <input
+                                type="checkbox"
+                                className="h-4 w-4 accent-zinc-900"
+                                checked={Boolean(analysisSettings.platformAdjustments)}
+                                onChange={() => toggleAnalysisSetting('platformAdjustments')}
+                            />
+                            <span className="text-sm text-zinc-800 dark:text-zinc-200">平台策略調整</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-subtle">

@@ -90,6 +90,9 @@ const ReportPage = () => {
         baseFollowerData
     } = reportData;
 
+    const analysisDisplaySettings = reportData.analysisDisplaySettings || { insights: true, contentSuggestions: true, platformAdjustments: true };
+    const anyAnalysisVisible = Boolean(analysisDisplaySettings.insights || analysisDisplaySettings.contentSuggestions || analysisDisplaySettings.platformAdjustments);
+
     const ReportSection: React.FC<{title: string; children: React.ReactNode}> = ({ title, children }) => (
         <section className="report-section mb-8">
             <h2 className="text-2xl font-bold text-slate-800 border-b-2 border-emerald-500 pb-2 mb-4">{title}</h2>
@@ -163,21 +166,27 @@ const ReportPage = () => {
                     </ReportSection>
                 )}
 
-                 {sections.analysis && reportData.analysisData && (
+                 {sections.analysis && reportData.analysisData && anyAnalysisVisible && (
                     <ReportSection title="分析與建議">
                          <div className="space-y-4">
-                            <div>
-                                <h4 className="font-semibold text-slate-700">本月重點洞察</h4>
-                                <p className="whitespace-pre-wrap p-2 bg-slate-50 rounded mt-1">{reportData.analysisData.insights || '無'}</p>
-                            </div>
-                            <div>
-                                <h4 className="font-semibold text-slate-700">內容方向建議</h4>
-                                <p className="whitespace-pre-wrap p-2 bg-slate-50 rounded mt-1">{reportData.analysisData.contentSuggestions || '無'}</p>
-                            </div>
-                            <div>
-                                <h4 className="font-semibold text-slate-700">平台策略調整</h4>
-                                <p className="whitespace-pre-wrap p-2 bg-slate-50 rounded mt-1">{reportData.analysisData.platformAdjustments || '無'}</p>
-                            </div>
+                            {analysisDisplaySettings.insights && (
+                                <div>
+                                    <h4 className="font-semibold text-slate-700">本月重點洞察</h4>
+                                    <p className="whitespace-pre-wrap p-2 bg-slate-50 rounded mt-1">{reportData.analysisData.insights || '無'}</p>
+                                </div>
+                            )}
+                            {analysisDisplaySettings.contentSuggestions && (
+                                <div>
+                                    <h4 className="font-semibold text-slate-700">內容方向建議</h4>
+                                    <p className="whitespace-pre-wrap p-2 bg-slate-50 rounded mt-1">{reportData.analysisData.contentSuggestions || '無'}</p>
+                                </div>
+                            )}
+                            {analysisDisplaySettings.platformAdjustments && (
+                                <div>
+                                    <h4 className="font-semibold text-slate-700">平台策略調整</h4>
+                                    <p className="whitespace-pre-wrap p-2 bg-slate-50 rounded mt-1">{reportData.analysisData.platformAdjustments || '無'}</p>
+                                </div>
+                            )}
                         </div>
                     </ReportSection>
                 )}

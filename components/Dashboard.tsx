@@ -6,7 +6,7 @@ import { lastDayOfMonth } from 'date-fns/lastDayOfMonth';
 import { format } from 'date-fns/format';
 import { subDays } from 'date-fns/subDays';
 import { startOfDay } from 'date-fns/startOfDay';
-import type { NormalizedPost, AnalysisData, AllMonthlyFollowerData, BaseFollowerData, ReadOnlyViewState } from '../types';
+import type { NormalizedPost, AnalysisData, AllMonthlyFollowerData, BaseFollowerData, ReadOnlyViewState, AnalysisDisplaySettings } from '../types';
 import { Platform } from '../types';
 import { fetchOgImage } from '../utils/ogFetcher';
 import KpiCard from './KpiCard';
@@ -197,6 +197,7 @@ interface DashboardProps {
     posts: NormalizedPost[];
     allMonthlyFollowerData: AllMonthlyFollowerData;
     baseFollowerData: BaseFollowerData;
+    analysisDisplaySettings?: AnalysisDisplaySettings;
     isReadOnly: boolean;
     readOnlyViewState: ReadOnlyViewState | null;
     readOnlyAnalysis: AnalysisData | null;
@@ -240,7 +241,7 @@ const copyToClipboard = (text: string): Promise<void> => {
 
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-    posts, allMonthlyFollowerData, baseFollowerData, isReadOnly, readOnlyViewState, 
+    posts, allMonthlyFollowerData, baseFollowerData, analysisDisplaySettings, isReadOnly, readOnlyViewState, 
     readOnlyAnalysis, onDateRangeLabelChange, allAnalyses, onSaveAnalysis, onShareRequest, clientId
 }) => {
     const filterStorageKey = useMemo(() => {
@@ -517,6 +518,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             allMonthlyFollowerData: allMonthlyFollowerData,
             baseFollowerData: baseFollowerData,
             analysisData: analysisData,
+            analysisDisplaySettings: analysisDisplaySettings || { insights: true, contentSuggestions: true, platformAdjustments: true },
         };
 
         try {
@@ -731,7 +733,12 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 p-1 rounded-2xl">
-                 <AnalysisAndSuggestions savedData={analysisData} onSave={handleSaveAnalysis} isReadOnly={isReadOnly} />
+                      <AnalysisAndSuggestions
+                          savedData={analysisData}
+                          onSave={handleSaveAnalysis}
+                          isReadOnly={isReadOnly}
+                          displaySettings={analysisDisplaySettings}
+                      />
             </div>
             
             <Modal isOpen={!!previewPost} onClose={handleCloseModal} title="貼文詳情">

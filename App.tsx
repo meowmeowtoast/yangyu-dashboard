@@ -5,7 +5,7 @@ import Dashboard from './components/Dashboard';
 import FileUpload from './components/FileUpload';
 import DataManagementPage, { LocalDataManager } from './components/DataManagementPage';
 import Footer from './components/Footer';
-import type { DataSet, NormalizedPost, SelectionState, AnalysisData, ReadOnlyViewState, SharedData, UserData, WorkspaceUserDataV2, ClientThemeColor } from './types';
+import type { DataSet, NormalizedPost, SelectionState, AnalysisData, ReadOnlyViewState, SharedData, UserData, WorkspaceUserDataV2, ClientThemeColor, AnalysisDisplaySettings } from './types';
 import { useAuth } from './components/AuthContext';
 import * as KVStore from './utils/kvStore';
 import { generateShortLink, generateLongLink, getViewIdFromUrl, decompressViewData } from './utils/sharing';
@@ -69,8 +69,20 @@ const createEmptyUserData = (companyName = ''): UserData => ({
     selectionState: { enabledDataSetIds: {}, enabledPostPermalinks: {} },
     allMonthlyFollowerData: {},
     baseFollowerData: { fbBase: '', igBase: '' },
-    companyProfile: { companyName, instagramUrl: '', facebookUrl: '', logo: '' }
+    companyProfile: { companyName, instagramUrl: '', facebookUrl: '', logo: '' },
+    analysisDisplaySettings: { insights: true, contentSuggestions: true, platformAdjustments: true },
 });
+
+const normalizeAnalysisDisplaySettings = (value: any): AnalysisDisplaySettings => {
+    const fallback: AnalysisDisplaySettings = { insights: true, contentSuggestions: true, platformAdjustments: true };
+    if (!value || typeof value !== 'object') return fallback;
+
+    const insights = typeof value.insights === 'boolean' ? value.insights : fallback.insights;
+    const contentSuggestions = typeof value.contentSuggestions === 'boolean' ? value.contentSuggestions : fallback.contentSuggestions;
+    const platformAdjustments = typeof value.platformAdjustments === 'boolean' ? value.platformAdjustments : fallback.platformAdjustments;
+
+    return { insights, contentSuggestions, platformAdjustments };
+};
 
 const normalizeWorkspaceUserDataV2 = (data: any): WorkspaceUserDataV2 | null => {
     if (!data || typeof data !== 'object') return null;
@@ -215,6 +227,7 @@ const sanitizeAndValidateData = (data: any | null): UserData | null => {
         allMonthlyFollowerData: processingData.allMonthlyFollowerData || {},
         baseFollowerData: processingData.baseFollowerData || { fbBase: '', igBase: '' },
         companyProfile: processingData.companyProfile || { companyName: '', instagramUrl: '', facebookUrl: '', logo: '' },
+        analysisDisplaySettings: normalizeAnalysisDisplaySettings(processingData.analysisDisplaySettings),
     };
 
     console.log("Sanitized Data:", validatedData);
@@ -262,7 +275,7 @@ const App: React.FC = () => {
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
     // Deconstruct for easier access
-    const { dataSets, selectionState, allMonthlyFollowerData, baseFollowerData, companyProfile } = allUserData;
+    const { dataSets, selectionState, allMonthlyFollowerData, baseFollowerData, companyProfile, analysisDisplaySettings } = allUserData;
 
     const currentClientId = workspace?.currentClientId;
     const currentClientName = currentClientId
@@ -1106,6 +1119,7 @@ const App: React.FC = () => {
                                 posts={enabledPosts}
                                 allMonthlyFollowerData={allMonthlyFollowerData}
                                 baseFollowerData={baseFollowerData}
+                                analysisDisplaySettings={analysisDisplaySettings}
                                 isReadOnly={isReadOnly}
                                 readOnlyViewState={readOnlyViewState}
                                 readOnlyAnalysis={readOnlyAnalysis}
@@ -1131,6 +1145,8 @@ const App: React.FC = () => {
                             onBaseFollowerDataUpdate={(newData) => updateStateAndPersist({ baseFollowerData: newData })}
                             companyProfile={companyProfile}
                             onCompanyProfileUpdate={(newProfile) => updateStateAndPersist({ companyProfile: newProfile })}
+                            analysisDisplaySettings={analysisDisplaySettings}
+                            onAnalysisDisplaySettingsUpdate={(newSettings) => updateStateAndPersist({ analysisDisplaySettings: newSettings })}
                             onExportData={handleExportData}
                             onImportData={handleImportData}
                             onBackupRequest={getAllDataForBackup}

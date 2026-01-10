@@ -68,6 +68,13 @@ export interface UserData {
     allMonthlyFollowerData: AllMonthlyFollowerData;
     baseFollowerData: BaseFollowerData;
     companyProfile: CompanyProfile;
+  analysisDisplaySettings?: AnalysisDisplaySettings;
+}
+
+export interface AnalysisDisplaySettings {
+  insights: boolean;
+  contentSuggestions: boolean;
+  platformAdjustments: boolean;
 }
 
 export interface WorkspaceClient {
