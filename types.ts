@@ -107,7 +107,17 @@ export interface SharedData {
   analysis: AnalysisData;
 }
 
-export type ThemeColor = 'zinc' | 'emerald' | 'rose' | 'amber' | 'indigo' | 'orange';
+export type ThemeColor =
+  | 'zinc'
+  | 'neutral'
+  | 'stone'
+  | 'slate'
+  | 'amber'
+  | 'orange'
+  | 'indigo'
+  | 'blue'
+  | 'rose'
+  | 'emerald';
 
-// Client theme colors: keep defaults in earth-tone palette.
-export type ClientThemeColor = Extract<ThemeColor, 'zinc' | 'amber' | 'orange' | 'emerald'>;
+// Client theme colors: allow a richer palette; defaults should use earth tones.
+export type ClientThemeColor = ThemeColor;

@@ -14,10 +14,22 @@ import { exportDataAsJson, importDataFromFile } from './utils/backup';
 
 const WORKSPACE_ANALYSIS_DELIM = '::';
 
-const CLIENT_THEME_COLORS: ClientThemeColor[] = ['amber', 'orange', 'emerald', 'zinc'];
+// Default palette: earth tones (requested) for new clients.
+const CLIENT_THEME_COLORS: ClientThemeColor[] = ['stone', 'amber', 'orange', 'zinc'];
 
 const isClientThemeColor = (value: any): value is ClientThemeColor => {
-    return value === 'zinc' || value === 'amber' || value === 'orange' || value === 'emerald';
+    return (
+        value === 'zinc' ||
+        value === 'neutral' ||
+        value === 'stone' ||
+        value === 'slate' ||
+        value === 'amber' ||
+        value === 'orange' ||
+        value === 'indigo' ||
+        value === 'blue' ||
+        value === 'rose' ||
+        value === 'emerald'
+    );
 };
 
 const pickDefaultClientThemeColor = (workspace: WorkspaceUserDataV2 | null): ClientThemeColor => {
