@@ -919,6 +919,7 @@ const App: React.FC = () => {
             allMonthlyFollowerData: allMonthlyFollowerData,
             baseFollowerData: baseFollowerData,
             companyProfile: companyProfile,
+            analysisDisplaySettings: normalizeAnalysisDisplaySettings(analysisDisplaySettings),
         };
 
         const sharedData: SharedData = {
