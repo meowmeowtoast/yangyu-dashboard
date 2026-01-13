@@ -107,6 +107,24 @@ const normalizeAnalysisDisplaySettings = (value: any): AnalysisDisplaySettings =
     return { insights, contentSuggestions, platformAdjustments };
 };
 
+const encodeAnalysisDisplaySettingsParam = (settings: AnalysisDisplaySettings): string => {
+    // bitmask: insights=1, contentSuggestions=2, platformAdjustments=4
+    const mask = (settings.insights ? 1 : 0) | (settings.contentSuggestions ? 2 : 0) | (settings.platformAdjustments ? 4 : 0);
+    return String(mask);
+};
+
+const decodeAnalysisDisplaySettingsParam = (raw: string | null): AnalysisDisplaySettings | null => {
+    if (!raw) return null;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return null;
+    const mask = Math.max(0, Math.min(7, Math.trunc(n)));
+    return {
+        insights: (mask & 1) === 1,
+        contentSuggestions: (mask & 2) === 2,
+        platformAdjustments: (mask & 4) === 4,
+    };
+};
+
 const normalizeWorkspaceUserDataV2 = (data: any): WorkspaceUserDataV2 | null => {
     if (!data || typeof data !== 'object') return null;
     const versionOk = data.version === 2 || data.version === '2';
@@ -429,6 +447,7 @@ const App: React.FC = () => {
             }
 
             const viewId = getViewIdFromUrl();
+            const urlOverrideDisplaySettings = decodeAnalysisDisplaySettingsParam(urlParams.get('ads'));
             
             const loadSharedData = (sharedData: SharedData | null) => {
                 if (!sharedData) {
@@ -459,6 +478,12 @@ const App: React.FC = () => {
                 };
                 
                 restoredUserData.selectionState = forcedSelectionState;
+
+                // Allow URL parameter to override display settings for shared views.
+                // This lets existing share IDs reflect the current selection when copied from admin.
+                if (urlOverrideDisplaySettings) {
+                    restoredUserData.analysisDisplaySettings = normalizeAnalysisDisplaySettings(urlOverrideDisplaySettings);
+                }
 
                 setAllUserData(restoredUserData);
                 setAllAnalyses(sharedData.analyses || {});
@@ -929,6 +954,8 @@ const App: React.FC = () => {
             analysis,
         };
 
+        const displaySettingsForShare = normalizeAnalysisDisplaySettings(analysisDisplaySettings);
+
         try {
             const { url, id } = await generateShortLink(sharedData);
             if (!isReadOnly) {
@@ -941,7 +968,13 @@ const App: React.FC = () => {
                     console.warn('Failed to record shared view meta:', err);
                 });
             }
-            return { link: url, isShort: true };
+            try {
+                const u = new URL(url);
+                u.searchParams.set('ads', encodeAnalysisDisplaySettingsParam(displaySettingsForShare));
+                return { link: u.toString(), isShort: true };
+            } catch {
+                return { link: url, isShort: true };
+            }
         } catch (error: any) {
             console.warn('Short link error', error);
             const isPermissionError = error.code === 'permission-denied' || (error.message && error.message.toLowerCase().includes('permission'));
@@ -949,7 +982,13 @@ const App: React.FC = () => {
             if (isPermissionError) {
                 try {
                     const longLink = generateLongLink(sharedData);
-                    return { link: longLink, isShort: false };
+                    try {
+                        const u = new URL(longLink);
+                        u.searchParams.set('ads', encodeAnalysisDisplaySettingsParam(displaySettingsForShare));
+                        return { link: u.toString(), isShort: false };
+                    } catch {
+                        return { link: longLink, isShort: false };
+                    }
                 } catch (longLinkError) {
                     console.error('Fallback error:', longLinkError);
                     throw new Error('產生分享連結時發生未知錯誤。');

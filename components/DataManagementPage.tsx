@@ -533,6 +533,12 @@ const DataManagementPage: React.FC<DataManagementPageProps> = ({
     const makeSharedViewUrl = (id: string) => {
         const url = new URL(window.location.origin + window.location.pathname);
         url.searchParams.set('view', id);
+        // Encode current analysis display selection so shared view reflects it.
+        const mask =
+            (analysisSettings.insights ? 1 : 0) |
+            (analysisSettings.contentSuggestions ? 2 : 0) |
+            (analysisSettings.platformAdjustments ? 4 : 0);
+        url.searchParams.set('ads', String(mask));
         return url.toString();
     };
 
